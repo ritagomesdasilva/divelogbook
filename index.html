@@ -110,7 +110,7 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
 .snackbar button{background:none;border:none;color:var(--aqua);font-weight:600;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
 .empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .map-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.map-card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.map-card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative;isolation:isolate;z-index:0}
 #map{height:280px;width:100%;background:var(--shallow)}
 .leaflet-popup-content{font-family:'IBM Plex Sans',sans-serif;font-size:13px}
 .leaflet-popup-content b{font-family:'Bricolage Grotesque',sans-serif}

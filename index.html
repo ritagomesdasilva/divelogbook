@@ -387,8 +387,8 @@ document.addEventListener('click',e=>{
 
 // ---------- Nuvem (Supabase) ----------
 // Preencher depois de criar o projeto no Supabase (ver SETUP.md). Vazio = modo local.
-const SUPABASE_URL='';
-const SUPABASE_KEY='';
+const SUPABASE_URL='https://ydmogcteobywnkdgdzpw.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkbW9nY3Rlb2J5d25rZGdkenB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMTA2NTcsImV4cCI6MjA5OTY4NjY1N30.-fDbys0_c-Euv5VBe-vv3SV7StI1I0lSNQW3_SJlllo';
 let sb=null,user=null,deletedIds=[];
 const DEL_KEY='dive-deleted-ids';
 if(SUPABASE_URL&&SUPABASE_KEY&&typeof supabase!=='undefined'){

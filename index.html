@@ -306,6 +306,9 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
         <button class="btn" id="authSendBtn">Send magic link</button>
         <button class="btn btn-ghost" onclick="closeAuth()">Use without account</button>
       </div>
+      <div class="actions" id="authBackupRow" style="display:none;margin-top:8px">
+        <button class="btn btn-ghost" id="authBackupBtn">💾 No account? Save a backup file instead</button>
+      </div>
       <div class="hint" style="margin-top:10px">Without an account, your dives are stored on this device only.</div>
     </div>
     <div id="authLoggedIn" style="display:none">
@@ -429,6 +432,7 @@ function updateAccountUI(){
 function openAuth(){
   if(!sb){alert('Sync is not configured in this installation yet (see SETUP.md). Your data is stored on this device.');return}
   $('authMsg').textContent='';
+  $('authBackupRow').style.display=(!user&&entries.length)?'flex':'none';
   $('authIntro').innerHTML=(!user&&entries.length)?
     '⚠️ You have <b>'+entries.length+' dive'+(entries.length>1?'s':'')+'</b> stored only on this device — if the browser data is cleared, they\'re gone. Sign in and they\'ll be safely backed up and available everywhere. No passwords: you get a <b>magic link</b> by email.':
     '👋 Welcome! With a free account, your dives are stored in the cloud and available on any device. No passwords: you get a <b>magic link</b> by email.';
@@ -897,13 +901,22 @@ async function delEntry(id){
   }
 }
 
-$('exportBtn').addEventListener('click',()=>{
-  closeMenu();
+function downloadBackup(){
   const blob=new Blob([JSON.stringify(entries,null,2)],{type:'application/json'});
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);a.download='dive-logbook-backup.json';a.click();
+  a.href=URL.createObjectURL(blob);
+  a.download='dive-logbook-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
   URL.revokeObjectURL(a.href);
+}
+$('exportBtn').addEventListener('click',()=>{
+  closeMenu();
+  downloadBackup();
   flash('Backup downloaded ✓','dashMsg');
+});
+$('authBackupBtn').addEventListener('click',()=>{
+  downloadBackup();
+  $('authMsg').textContent='💾 Backup downloaded — keep it somewhere safe. You can sign in any time to sync automatically instead.';
 });
 
 // ---------- Render ----------

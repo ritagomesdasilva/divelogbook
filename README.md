@@ -1,22 +1,22 @@
 # 🤿 Dive Logbook
 
-Logbook de mergulho pessoal — app HTML autónoma, sem dependências de build.
+A personal dive logbook — a self-contained HTML app, no build step required.
 
-## Funcionalidades
-- Registo completo: perfil do mergulho, equipamento (fato/garrafa/pesos), notas e vida marinha, rating em bolhas
-- Importação do computador de mergulho (CSV, Subsurface XML, UDDF) com deteção de duplicados, preview e undo
-- Fotos da página do logbook de papel e do carimbo, com recriação digital do carimbo por IA*
-- Pré-preenchimento do formulário a partir da foto do logbook por IA*
-- Mapa dos sítios de mergulho (Leaflet + OpenStreetMap, geocodificação Nominatim)
-- Cópia de segurança em JSON
-- Contas com link mágico (Supabase) e sincronização automática entre dispositivos
-- Funciona offline; sincroniza quando há rede
-- Dados guardados localmente no browser (localStorage)
+## Features
+- Full dive records: profile, equipment (wetsuit/tank/weights), notes & marine life, bubble rating
+- Import from dive computers (CSV, Subsurface XML, UDDF) with duplicate detection, preview and undo
+- Photos of your paper logbook page and dive centre stamp, with AI digital stamp recreation*
+- AI form pre-fill from a photo of your paper logbook*
+- Map of your dive sites (Leaflet + OpenStreetMap, Nominatim geocoding)
+- JSON backup
+- Magic-link accounts (Supabase) with automatic cross-device sync
+- Offline-first: log dives without internet, sync when you're back online
 
-\* As funções de IA requerem execução no preview do Claude.
+\* AI features require running inside the Claude preview.
 
-## Usar
-Abrir `index.html` no browser, ou ativar GitHub Pages (Settings → Pages → Deploy from branch → main) e aceder pelo URL publicado.
+## Getting started
+- **Users:** see [HOW-TO-USE.md](HOW-TO-USE.md)
+- **Admins / self-hosting:** see [SETUP.md](SETUP.md)
 
-## Nota sobre dados
-Os registos vivem no localStorage de **cada dispositivo** — telemóvel e portátil não sincronizam entre si. Usa "Guardar cópia de segurança" para exportar/migrar.
+## Data
+Without an account, dives live in each device's localStorage. With an account, they sync to Supabase — protected per user by Row Level Security.

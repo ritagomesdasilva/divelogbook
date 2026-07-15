@@ -1,13 +1,13 @@
-# SETUP — Guia de instalação (admin)
+# SETUP — Installation guide (admin)
 
-Para quem vai publicar a app. Os utilizadores finais só precisam do COMO-USAR.md.
+For whoever publishes the app. End users only need HOW-TO-USE.md.
 
-## 1. Criar o projeto Supabase
-1. supabase.com → New project (plano free chega)
-2. **Authentication → Sign In / Up:** confirma que "Email" está ativo (magic link / OTP vem ativo por defeito)
-3. **Authentication → URL Configuration:** em *Site URL* coloca o URL final da app (ex.: `https://<user>.github.io/dive-logbook/`)
+## 1. Create the Supabase project
+1. supabase.com → New project (free plan is fine)
+2. **Authentication → Sign In / Up:** make sure "Email" is enabled (magic link / OTP is on by default)
+3. **Authentication → URL Configuration:** set *Site URL* to the app's final URL (e.g. `https://your-app.vercel.app/` or `https://<user>.github.io/dive-logbook/`)
 
-## 2. Criar a tabela (SQL Editor → New query → Run)
+## 2. Create the table (SQL Editor → New query → Run)
 ```sql
 create table public.dives (
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -24,19 +24,21 @@ create policy "insert own" on public.dives for insert with check (auth.uid() = u
 create policy "update own" on public.dives for update using (auth.uid() = user_id);
 create policy "delete own" on public.dives for delete using (auth.uid() = user_id);
 ```
-As policies de RLS garantem que cada utilizador só lê/escreve os próprios mergulhos.
+The RLS policies guarantee each user can only read/write their own dives.
 
-## 3. Ligar a app
-1. Supabase → Settings → API: copia o **Project URL** e a **anon public key**
-2. No `index.html`, procura por `SUPABASE_URL` e `SUPABASE_KEY` (perto de "Nuvem (Supabase)") e cola os valores
-   - A anon key é pública por natureza — a segurança vem das policies de RLS, não do segredo da chave
-3. Commit ao repo
+## 3. Connect the app
+1. Supabase → Settings → API: copy the **Project URL** and the **anon public key**
+2. In `index.html`, search for `SUPABASE_URL` and `SUPABASE_KEY` (near "Nuvem (Supabase)") and paste the values
+   - The anon key is public by design — security comes from the RLS policies, not from hiding the key
+3. Commit to the repo
 
-## 4. Publicar (GitHub Pages)
-Repo → Settings → Pages → Deploy from a branch → `main` → Save.
-O URL fica `https://<user>.github.io/<repo>/`. Confirma que é o mesmo que puseste no passo 1.3.
+## 4. Publish
+**Vercel:** import the GitHub repo (vercel.com → Add New → Project). A static `index.html` at the root needs no configuration — every push to `main` auto-deploys.
+**GitHub Pages (alternative):** repo → Settings → Pages → Deploy from a branch → `main`.
 
-## Notas
-- Sem `SUPABASE_URL`/`SUPABASE_KEY` preenchidos, a app funciona em modo local (sem contas) — útil para testar.
-- Limites do free tier do Supabase (500 MB DB) chegam para milhares de mergulhos com fotos comprimidas.
-- As funções ✨ de IA (ler carimbo/logbook) só funcionam quando a app corre no preview do Claude — no site publicado ficam desativadas com aviso.
+Make sure the published URL matches the Site URL from step 1.3 — otherwise magic links will redirect to the wrong place.
+
+## Notes
+- With `SUPABASE_URL`/`SUPABASE_KEY` left empty, the app runs in local mode (no accounts) — useful for testing.
+- Supabase free tier limits (500 MB DB) are enough for thousands of dives with compressed photos.
+- The ✨ AI features (stamp/logbook reading) only work when the app runs inside the Claude preview — on the published site they show a notice instead.

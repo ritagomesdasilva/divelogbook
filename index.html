@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -137,154 +137,154 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
   <div class="ticks"><span>0 m</span><span>10</span><span>20</span><span>30</span></div>
   <div class="wrap">
     <h1>Dive Logbook</h1>
-    <div class="sub">Registo pessoal de mergulhos · Rita</div>
+    <div class="sub">Personal dive log · Rita</div>
     <div class="stats">
-      <div class="stat"><b id="stTotal">0</b><span>mergulhos</span></div>
-      <div class="stat"><b id="stDepth">–</b><span>prof. máx</span></div>
-      <div class="stat"><b id="stTime">0</b><span>min de fundo</span></div>
+      <div class="stat"><b id="stTotal">0</b><span>dives</span></div>
+      <div class="stat"><b id="stDepth">–</b><span>max depth</span></div>
+      <div class="stat"><b id="stTime">0</b><span>bottom time (min)</span></div>
     </div>
   </div>
 </header>
 
 <main>
   <div class="dash-actions">
-    <button class="btn desktop-only" id="addBtn">＋ Adicionar mergulho</button>
+    <button class="btn desktop-only" id="addBtn">＋ Add dive</button>
     <div class="menu-wrap">
-      <button class="btn btn-ghost menu-btn" id="menuBtn" aria-label="Mais opções" aria-haspopup="true">⋯</button>
+      <button class="btn btn-ghost menu-btn" id="menuBtn" aria-label="More options" aria-haspopup="true">⋯</button>
       <div class="menu" id="menu" style="display:none">
-        <button class="menu-item" onclick="closeMenu();document.getElementById('importFile').click()">⌵ Importar do computador de mergulho</button>
-        <button class="menu-item" id="exportBtn">🛟 Guardar cópia de segurança</button>
-        <button class="menu-item" onclick="closeMenu();openAuth()">☁️ Conta e sincronização</button>
+        <button class="menu-item" onclick="closeMenu();document.getElementById('importFile').click()">⌵ Import from dive computer</button>
+        <button class="menu-item" id="exportBtn">🛟 Save backup</button>
+        <button class="menu-item" onclick="closeMenu();openAuth()">☁️ Account & sync</button>
       </div>
     </div>
     <input type="file" id="importFile" accept=".csv,.xml,.uddf,.txt" style="display:none">
-    <button class="chip" id="accountChip" style="display:none" onclick="openAuth()">☁️ Entrar para sincronizar</button>
+    <button class="chip" id="accountChip" style="display:none" onclick="openAuth()">☁️ Sign in to sync</button>
     <span class="msg" id="dashMsg"></span>
   </div>
 
-  <div class="log-head map-head"><h2>Onde já mergulhei</h2><button class="btn-mini" id="mapUpdateBtn">📍 Atualizar mapa</button></div>
+  <div class="log-head map-head"><h2>Where I’ve dived</h2><button class="btn-mini" id="mapUpdateBtn">📍 Update map</button></div>
   <div class="map-card">
     <div id="map"></div>
     <div class="hint" id="mapHint" style="padding:8px 12px"></div>
   </div>
 
-  <div class="log-head"><h2>Registos</h2></div>
+  <div class="log-head"><h2>Dive log</h2></div>
   <div id="log"></div>
 </main>
 
-<button class="fab" id="fabBtn" aria-label="Adicionar mergulho">＋</button>
+<button class="fab" id="fabBtn" aria-label="Add dive">＋</button>
 
 <!-- ---------- Modal: confirmação de importação ---------- -->
 <div id="importModal">
   <div class="modal-card modal-sm">
     <div class="modal-head">
-      <h2 style="margin:0">Importar mergulhos</h2>
-      <button class="close-x" onclick="cancelImport()" aria-label="Fechar">×</button>
+      <h2 style="margin:0">Import dives</h2>
+      <button class="close-x" onclick="cancelImport()" aria-label="Close">×</button>
     </div>
     <p class="import-summary" id="importSummary"></p>
     <div id="importPreview"></div>
     <div class="actions">
-      <button class="btn" id="confirmImportBtn">Importar</button>
-      <button class="btn btn-ghost" onclick="cancelImport()">Cancelar</button>
+      <button class="btn" id="confirmImportBtn">Import</button>
+      <button class="btn btn-ghost" onclick="cancelImport()">Cancel</button>
     </div>
   </div>
 </div>
 
 <div class="snackbar" id="snackbar" style="display:none">
   <span id="snackText"></span>
-  <button id="snackUndo">Anular</button>
+  <button id="snackUndo">Undo</button>
 </div>
 
 <!-- ---------- Modal: novo mergulho / editar ---------- -->
 <div id="formModal">
   <div class="modal-card">
     <div class="modal-head">
-      <h2 id="formTitle" style="margin:0">Novo mergulho</h2>
-      <button class="close-x" onclick="closeForm()" aria-label="Fechar">×</button>
+      <h2 id="formTitle" style="margin:0">New dive</h2>
+      <button class="close-x" onclick="closeForm()" aria-label="Close">×</button>
     </div>
 
     <fieldset>
-      <legend>Identificação</legend>
+      <legend>Identification</legend>
       <div class="grid">
-        <div><label for="fNum">Nº do mergulho</label><input type="number" id="fNum" min="1"></div>
-        <div><label for="fDate">Data</label><input type="date" id="fDate"></div>
-        <div style="grid-column:1/-1"><label for="fSite">Sítio</label><input type="text" id="fSite" placeholder="ex.: Chumphon Pinnacle, Ko Tao"></div>
-        <div><label for="fType">Tipo</label>
-          <select id="fType"><option>Barco</option><option>Costa</option><option>Noturno</option><option>Profundo</option><option>Naufrágio</option><option>Treino / curso</option></select>
+        <div><label for="fNum">Dive number</label><input type="number" id="fNum" min="1"></div>
+        <div><label for="fDate">Date</label><input type="date" id="fDate"></div>
+        <div style="grid-column:1/-1"><label for="fSite">Site</label><input type="text" id="fSite" placeholder="e.g. Chumphon Pinnacle, Ko Tao"></div>
+        <div><label for="fType">Type</label>
+          <select id="fType"><option>Boat</option><option>Shore</option><option>Night</option><option>Deep</option><option>Wreck</option><option>Training / course</option></select>
         </div>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>Perfil do mergulho</legend>
+      <legend>Dive profile</legend>
       <div class="grid">
-        <div><label for="fDepth">Prof. máx (m)</label><input type="number" id="fDepth" step="0.1" min="0"></div>
-        <div><label for="fTime">Tempo de fundo (min)</label><input type="number" id="fTime" min="0"></div>
-        <div><label for="fTemp">Temp. água (°C)</label><input type="number" id="fTemp" step="0.5"></div>
-        <div><label for="fVis">Visibilidade (m)</label><input type="number" id="fVis" min="0"></div>
+        <div><label for="fDepth">Max depth (m)</label><input type="number" id="fDepth" step="0.1" min="0"></div>
+        <div><label for="fTime">Bottom time (min)</label><input type="number" id="fTime" min="0"></div>
+        <div><label for="fTemp">Water temp (°C)</label><input type="number" id="fTemp" step="0.5"></div>
+        <div><label for="fVis">Visibility (m)</label><input type="number" id="fVis" min="0"></div>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>Equipamento</legend>
+      <legend>Equipment</legend>
       <div class="grid">
-        <div><label for="fSuit">Fato (mm)</label><input type="number" id="fSuit" step="0.5" min="0" placeholder="3"></div>
-        <div><label for="fTankL">Garrafa (L)</label><input type="number" id="fTankL" placeholder="12"></div>
-        <div><label for="fTankMat">Material</label><select id="fTankMat"><option>Alumínio</option><option>Aço</option></select></div>
-        <div><label for="fWeights">Pesos (kg)</label><input type="number" id="fWeights" step="0.5" min="0"></div>
-        <div><label for="fPStart">Pressão inicial (bar)</label><input type="number" id="fPStart" placeholder="200"></div>
-        <div><label for="fPEnd">Pressão final (bar)</label><input type="number" id="fPEnd" placeholder="50"></div>
+        <div><label for="fSuit">Wetsuit (mm)</label><input type="number" id="fSuit" step="0.5" min="0" placeholder="3"></div>
+        <div><label for="fTankL">Tank (L)</label><input type="number" id="fTankL" placeholder="12"></div>
+        <div><label for="fTankMat">Material</label><select id="fTankMat"><option>Aluminium</option><option>Steel</option></select></div>
+        <div><label for="fWeights">Weights (kg)</label><input type="number" id="fWeights" step="0.5" min="0"></div>
+        <div><label for="fPStart">Start pressure (bar)</label><input type="number" id="fPStart" placeholder="200"></div>
+        <div><label for="fPEnd">End pressure (bar)</label><input type="number" id="fPEnd" placeholder="50"></div>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>Fotos &amp; carimbo</legend>
+      <legend>Photos &amp; stamp</legend>
       <div class="photo-row">
         <div class="photo-slot">
-          <label for="fPhotoLog">Foto da página do logbook de papel</label>
+          <label for="fPhotoLog">Photo of your paper logbook page</label>
           <input type="file" id="fPhotoLog" accept="image/*">
-          <img id="thumbLog" class="thumb" style="display:none" alt="Foto do logbook">
+          <img id="thumbLog" class="thumb" style="display:none" alt="Logbook photo">
           <div class="ai-tools" id="aiTools" style="display:none">
-            <button type="button" class="btn-mini" id="fillFromPhotoBtn">✨ Preencher campos a partir da foto</button>
+            <button type="button" class="btn-mini" id="fillFromPhotoBtn">✨ Fill fields from photo</button>
             <span class="msg" id="aiMsg"></span>
           </div>
         </div>
         <div class="photo-slot">
-          <label for="fPhotoStamp">Foto do carimbo do centro de mergulho</label>
+          <label for="fPhotoStamp">Photo of the dive centre stamp</label>
           <input type="file" id="fPhotoStamp" accept="image/*">
-          <img id="thumbStamp" class="thumb" style="display:none" alt="Foto do carimbo">
+          <img id="thumbStamp" class="thumb" style="display:none" alt="Stamp photo">
           <div class="stamp-tools" id="stampTools" style="display:none">
-            <button type="button" class="btn-mini" id="readStampBtn">✨ Ler carimbo e recriar digital</button>
+            <button type="button" class="btn-mini" id="readStampBtn">✨ Read stamp & recreate digitally</button>
             <span class="msg" id="stampMsg"></span>
           </div>
           <div class="stamp-preview" id="stampPreview"></div>
         </div>
       </div>
-      <div class="hint">As funções ✨ leem as fotos com IA (sem inventar dados) — disponíveis no preview do Claude.</div>
+      <div class="hint">The ✨ features read your photos with AI (no made-up data) — available in the Claude preview.</div>
     </fieldset>
 
     <fieldset>
-      <legend>Notas &amp; vida marinha</legend>
-      <textarea id="fNotes" placeholder="O que aconteceu, animais que vi, sensações, ajustes de lastro..."></textarea>
+      <legend>Notes &amp; marine life</legend>
+      <textarea id="fNotes" placeholder="What happened, animals you saw, how it felt, weight adjustments..."></textarea>
       <div class="grid" style="margin-top:10px">
-        <div style="grid-column:1/-1"><label for="fBuddy">Buddy / centro de mergulho</label><input type="text" id="fBuddy" placeholder="ex.: instrutor João · Big Blue Diving"></div>
+        <div style="grid-column:1/-1"><label for="fBuddy">Buddy / dive centre</label><input type="text" id="fBuddy" placeholder="e.g. Instructor John · Big Blue Diving"></div>
       </div>
     </fieldset>
 
     <fieldset>
       <legend>Rating</legend>
       <div class="bubbles" id="rating">
-        <button type="button" class="bubble" data-v="1" aria-label="1 de 5"></button>
-        <button type="button" class="bubble" data-v="2" aria-label="2 de 5"></button>
-        <button type="button" class="bubble" data-v="3" aria-label="3 de 5"></button>
-        <button type="button" class="bubble" data-v="4" aria-label="4 de 5"></button>
-        <button type="button" class="bubble" data-v="5" aria-label="5 de 5"></button>
+        <button type="button" class="bubble" data-v="1" aria-label="1 of 5"></button>
+        <button type="button" class="bubble" data-v="2" aria-label="2 of 5"></button>
+        <button type="button" class="bubble" data-v="3" aria-label="3 of 5"></button>
+        <button type="button" class="bubble" data-v="4" aria-label="4 of 5"></button>
+        <button type="button" class="bubble" data-v="5" aria-label="5 of 5"></button>
       </div>
     </fieldset>
 
     <div class="actions">
-      <button class="btn" id="saveBtn">Registar mergulho</button>
-      <button class="btn btn-ghost" onclick="closeForm()">Cancelar</button>
+      <button class="btn" id="saveBtn">Save dive</button>
+      <button class="btn btn-ghost" onclick="closeForm()">Cancel</button>
       <span class="msg" id="msg"></span>
     </div>
   </div>
@@ -294,23 +294,23 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
 <div id="authModal">
   <div class="modal-card modal-sm">
     <div class="modal-head">
-      <h2 style="margin:0">☁️ A tua conta</h2>
-      <button class="close-x" onclick="closeAuth()" aria-label="Fechar">×</button>
+      <h2 style="margin:0">☁️ Your account</h2>
+      <button class="close-x" onclick="closeAuth()" aria-label="Close">×</button>
     </div>
     <div id="authLoggedOut">
-      <p class="import-summary">Com uma conta, os teus mergulhos ficam guardados na nuvem e disponíveis em qualquer dispositivo. Sem passwords: recebes um <b>link mágico</b> no email.</p>
-      <div style="margin-bottom:12px"><label for="authEmail">O teu email</label><input type="email" id="authEmail" placeholder="nome@exemplo.com" autocomplete="email"></div>
+      <p class="import-summary">With an account, your dives are stored in the cloud and available on any device. No passwords: you get a <b>magic link</b> by email.</p>
+      <div style="margin-bottom:12px"><label for="authEmail">Your email</label><input type="email" id="authEmail" placeholder="name@example.com" autocomplete="email"></div>
       <div class="actions">
-        <button class="btn" id="authSendBtn">Enviar link mágico</button>
-        <button class="btn btn-ghost" onclick="closeAuth()">Usar sem conta</button>
+        <button class="btn" id="authSendBtn">Send magic link</button>
+        <button class="btn btn-ghost" onclick="closeAuth()">Use without account</button>
       </div>
-      <div class="hint" style="margin-top:10px">Sem conta, os registos ficam guardados apenas neste dispositivo.</div>
+      <div class="hint" style="margin-top:10px">Without an account, your dives are stored on this device only.</div>
     </div>
     <div id="authLoggedIn" style="display:none">
-      <p class="import-summary">Sessão iniciada como <b id="authUserEmail"></b>.<br>Os teus mergulhos sincronizam automaticamente.</p>
+      <p class="import-summary">Signed in as <b id="authUserEmail"></b>.<br>Your dives sync automatically.</p>
       <div class="actions">
-        <button class="btn btn-ghost" id="authSignOutBtn">Terminar sessão</button>
-        <button class="btn btn-ghost" onclick="cloudSync(true);closeAuth()">Sincronizar agora</button>
+        <button class="btn btn-ghost" id="authSignOutBtn">Sign out</button>
+        <button class="btn btn-ghost" onclick="cloudSync(true);closeAuth()">Sync now</button>
       </div>
     </div>
     <div class="msg" id="authMsg" style="margin-top:10px;display:block"></div>
@@ -340,18 +340,18 @@ async function loadEntries(){
 }
 async function persist(){
   const json=JSON.stringify(entries);
-  if(json.length>4500000){flash('Espaço quase cheio — exporta e limpa registos antigos.','dashMsg')}
+  if(json.length>4500000){flash('Storage almost full — save a backup and clear old dives.','dashMsg')}
   try{
     if(hasWS){await window.storage.set(KEY,json)}
     else{localStorage.setItem(KEY,json)}
-  }catch(e){flash('Não consegui guardar — espaço cheio? Exporta o JSON.','dashMsg')}
+  }catch(e){flash('Couldn\'t save — storage full? Save a backup.','dashMsg')}
 }
 
 // ---------- Modal ----------
 function openForm(entry){
   editingId=entry?entry.id:null;
-  $('formTitle').textContent=entry?'Editar mergulho #'+(entry.num||''):'Novo mergulho';
-  $('saveBtn').textContent=entry?'Guardar alterações':'Registar mergulho';
+  $('formTitle').textContent=entry?'Edit dive #'+(entry.num||''):'New dive';
+  $('saveBtn').textContent=entry?'Save changes':'Save dive';
   clearFormFields();
   if(entry){
     $('fNum').value=entry.num||'';$('fDate').value=entry.date||'';$('fSite').value=entry.site||'';
@@ -410,13 +410,13 @@ function updateAccountUI(){
   const chip=$('accountChip');
   if(!sb){chip.style.display='none';return}
   chip.style.display='inline-flex';
-  chip.textContent=user?'☁️ '+(user.email||'').split('@')[0]+' ✓':'☁️ Entrar para sincronizar';
+  chip.textContent=user?'☁️ '+(user.email||'').split('@')[0]+' ✓':'☁️ Sign in to sync';
   $('authLoggedOut').style.display=user?'none':'block';
   $('authLoggedIn').style.display=user?'block':'none';
   if(user)$('authUserEmail').textContent=user.email||'';
 }
 function openAuth(){
-  if(!sb){alert('A sincronização ainda não está configurada nesta instalação (ver SETUP.md). Os dados ficam guardados neste dispositivo.');return}
+  if(!sb){alert('Sync is not configured in this installation yet (see SETUP.md). Your data is stored on this device.');return}
   $('authMsg').textContent='';
   updateAccountUI();
   $('authModal').style.display='flex';
@@ -425,15 +425,15 @@ function closeAuth(){$('authModal').style.display='none'}
 if(sb){
   $('authSendBtn').addEventListener('click',async()=>{
     const email=$('authEmail').value.trim();
-    if(!email||!email.includes('@')){$('authMsg').textContent='Escreve um email válido.';return}
-    $('authMsg').textContent='A enviar…';
+    if(!email||!email.includes('@')){$('authMsg').textContent='Please enter a valid email.';return}
+    $('authMsg').textContent='Sending…';
     const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
-    $('authMsg').textContent=error?'Não consegui enviar — tenta de novo.':'✉️ Enviado! Abre o email neste dispositivo e toca no link.';
+    $('authMsg').textContent=error?'Couldn\'t send — please try again.':'✉️ Sent! Open the email on this device and tap the link.';
   });
   $('authSignOutBtn').addEventListener('click',async()=>{
     await sb.auth.signOut();
     user=null;updateAccountUI();
-    $('authMsg').textContent='Sessão terminada. Os registos continuam neste dispositivo.';
+    $('authMsg').textContent='Signed out. Your dives remain on this device.';
   });
   sb.auth.onAuthStateChange((_ev,session)=>{
     const was=!!user;
@@ -446,7 +446,7 @@ async function pushOne(e){
   if(!sb||!user)return;
   try{
     await sb.from('dives').upsert({user_id:user.id,id:String(e.id),payload:e,updated_at:e.updatedAt||new Date().toISOString()},{onConflict:'user_id,id'});
-  }catch(err){flash('☁️ Sem ligação — sincroniza mais tarde.','dashMsg')}
+  }catch(err){flash('☁️ Offline — will sync later.','dashMsg')}
 }
 async function cloudSync(announce){
   if(!sb||!user)return;
@@ -474,9 +474,9 @@ async function cloudSync(announce){
       await sb.from('dives').upsert(toPush.map(e=>({user_id:user.id,id:String(e.id),payload:e,updated_at:e.updatedAt||new Date().toISOString()})),{onConflict:'user_id,id'});
     }
     await persist();render();drawMarkers();
-    if(announce)flash('☁️ Sincronizado — '+entries.length+' mergulhos.','dashMsg');
+    if(announce)flash('☁️ Synced — '+entries.length+' dives.','dashMsg');
   }catch(err){
-    if(announce)flash('☁️ Sem ligação — os dados ficam guardados localmente.','dashMsg');
+    if(announce)flash('☁️ Offline — your data is saved locally.','dashMsg');
   }
 }
 
@@ -510,7 +510,7 @@ function drawMarkers(){
   const bySite={};
   entries.forEach(e=>{
     const s=(e.site||'').trim();
-    if(!s||s.startsWith('(importado'))return;
+    if(!s||s.startsWith('(imported'))return;
     if(!bySite[s])bySite[s]={count:0,best:0};
     bySite[s].count++;
     bySite[s].best=Math.max(bySite[s].best,e.rating||0);
@@ -522,30 +522,30 @@ function drawMarkers(){
     pts.push([c.lat,c.lng]);
     const stars='🫧'.repeat(bySite[s].best||0);
     L.circleMarker([c.lat,c.lng],{radius:9,color:'#0E4C5C',weight:2,fillColor:'#8FD9DB',fillOpacity:.85})
-      .bindPopup('<b>'+esc(s)+'</b><br>'+bySite[s].count+' mergulho(s) '+stars)
+      .bindPopup('<b>'+esc(s)+'</b><br>'+bySite[s].count+' dive(s) '+stars)
       .addTo(markerLayer);
   }
   if(pts.length){map.fitBounds(pts,{padding:[36,36],maxZoom:9})}
   const missing=Object.keys(bySite).filter(s=>!siteCoords[s]).length;
   $('mapHint').textContent=pts.length?
-    (missing?missing+' sítio(s) por localizar — toca em "📍 Atualizar mapa" (precisa de internet).':''):
-    'Sem sítios localizados ainda. Regista mergulhos e toca em "📍 Atualizar mapa".';
+    (missing?missing+' site(s) not located yet — tap "📍 Update map" (needs internet).':''):
+    'No sites located yet. Log some dives and tap "📍 Update map".';
 }
 $('mapUpdateBtn').addEventListener('click',async()=>{
   const btn=$('mapUpdateBtn');btn.disabled=true;
-  const sites=[...new Set(entries.map(e=>(e.site||'').trim()).filter(s=>s&&!s.startsWith('(importado')))];
+  const sites=[...new Set(entries.map(e=>(e.site||'').trim()).filter(s=>s&&!s.startsWith('(imported')))];
   const missing=sites.filter(s=>!siteCoords[s]);
   let found=0;
   for(const s of missing){
     try{
-      $('mapHint').textContent='A localizar: '+s+'…';
+      $('mapHint').textContent='Locating: '+s+'…';
       const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(s));
       const j=await r.json();
       if(j&&j[0]){siteCoords[s]={lat:+j[0].lat,lng:+j[0].lon};found++}
       else{siteCoords[s]=null} // marca como tentado; evita repetir sempre
       await new Promise(r=>setTimeout(r,1100)); // respeitar rate limit do Nominatim
     }catch(err){
-      $('mapHint').textContent='Sem acesso ao serviço de localização aqui — tenta com o ficheiro aberto no browser, com internet.';
+      $('mapHint').textContent='Geocoding service unreachable here — try opening the app in a browser with internet.';
       btn.disabled=false;return;
     }
   }
@@ -554,7 +554,7 @@ $('mapUpdateBtn').addEventListener('click',async()=>{
   await saveCoords();
   drawMarkers();
   const notFound=missing.length-found;
-  $('mapHint').textContent=(found?found+' sítio(s) localizados ✓ ':'')+(notFound?notFound+' não encontrado(s) — tenta acrescentar a ilha/país ao nome do sítio.':'');
+  $('mapHint').textContent=(found?found+' site(s) located ✓ ':'')+(notFound?notFound+' not found — try adding the island/country to the site name.':'');
   btn.disabled=false;
 });
 
@@ -633,16 +633,16 @@ async function askClaude(imageDataUrl,prompt){
 $('fillFromPhotoBtn').addEventListener('click',async()=>{
   if(!photoLog)return;
   const btn=$('fillFromPhotoBtn');
-  btn.disabled=true;flash('A ler a página do logbook…','aiMsg');
+  btn.disabled=true;flash('Reading your logbook page…','aiMsg');
   try{
     const p=await askClaude(photoLog,
-      'Analisa esta foto de uma pagina de logbook de mergulho preenchida a mao. Extrai os dados visiveis e responde APENAS com JSON valido, sem markdown: {"num":numero do mergulho ou null,"date":"yyyy-mm-dd" ou null,"site":"nome do sitio" ou null,"depth":profundidade maxima em metros (numero) ou null,"time":tempo de fundo em minutos (numero) ou null,"temp":temperatura da agua em C ou null,"vis":visibilidade em metros ou null,"suit":espessura do fato em mm ou null,"tankL":litros da garrafa ou null,"weights":pesos em kg ou null,"pStart":pressao inicial em bar ou null,"pEnd":pressao final em bar ou null,"notes":"notas/animais vistos" ou null,"buddy":"buddy ou centro de mergulho" ou null}. MUITO IMPORTANTE: usa null para tudo o que nao conseguires ler com confianca. Nao inventes nem estimes valores.');
+      'Analyse this photo of a handwritten dive logbook page. Extract the visible data and reply ONLY with valid JSON, no markdown: {"num":dive number or null,"date":"yyyy-mm-dd" or null,"site":"site name" or null,"depth":max depth in metres (number) or null,"time":bottom time in minutes (number) or null,"temp":water temperature in C or null,"vis":visibility in metres or null,"suit":wetsuit thickness in mm or null,"tankL":tank litres or null,"weights":weights in kg or null,"pStart":start pressure in bar or null,"pEnd":end pressure in bar or null,"notes":"notes/animals seen" or null,"buddy":"buddy or dive centre" or null}. VERY IMPORTANT: use null for anything you cannot read confidently. Do not invent or estimate values.');
     const map={num:'fNum',date:'fDate',site:'fSite',depth:'fDepth',time:'fTime',temp:'fTemp',vis:'fVis',suit:'fSuit',tankL:'fTankL',weights:'fWeights',pStart:'fPStart',pEnd:'fPEnd',notes:'fNotes',buddy:'fBuddy'};
     let n=0;
     for(const k in map){if(p[k]!==null&&p[k]!==undefined&&p[k]!==''){$(map[k]).value=p[k];n++}}
-    flash(n?'Preenchi '+n+' campos — confirma antes de guardar ✓':'Não consegui ler dados com confiança nesta foto.','aiMsg');
+    flash(n?'Filled '+n+' fields — please review before saving ✓':'I couldn\'t read data confidently from this photo.','aiMsg');
   }catch(err){
-    flash('Leitura indisponível aqui — funciona no preview do Claude.','aiMsg');
+    flash('AI reading unavailable here — it works in the Claude preview.','aiMsg');
   }
   btn.disabled=false;
 });
@@ -651,16 +651,16 @@ $('fillFromPhotoBtn').addEventListener('click',async()=>{
 $('readStampBtn').addEventListener('click',async()=>{
   if(!photoStamp)return;
   const btn=$('readStampBtn');
-  btn.disabled=true;flash('A ler o carimbo…','stampMsg');
+  btn.disabled=true;flash('Reading the stamp…','stampMsg');
   try{
     const parsed=await askClaude(photoStamp,
-      'Analisa esta foto de um carimbo (stamp) de um centro de mergulho num logbook. Extrai o texto visivel e responde APENAS com JSON valido, sem markdown: {"found":true,"shape":"round" ou "rect","topText":"texto do arco superior (normalmente nome do centro)","bottomText":"texto do arco inferior (normalmente localizacao)","centerLines":["ate 3 linhas do centro"],"inkColor":"cor aproximada da tinta em hex"}. Se nao houver carimbo legivel: {"found":false}. Nao inventes texto que nao consigas ler.');
-    if(!parsed.found){flash('Não consegui ler um carimbo nesta foto.','stampMsg');btn.disabled=false;return}
+      'Analyse this photo of a dive centre stamp in a logbook. Extract the visible text and reply ONLY with valid JSON, no markdown: {"found":true,"shape":"round" or "rect","topText":"upper arc text (usually the centre name)","bottomText":"lower arc text (usually the location)","centerLines":["up to 3 centre lines"],"inkColor":"approximate ink colour in hex"}. If there is no readable stamp: {"found":false}. Do not invent text you cannot read.');
+    if(!parsed.found){flash('I couldn\'t find a readable stamp in this photo.','stampMsg');btn.disabled=false;return}
     stampData=parsed;
     $('stampPreview').innerHTML=makeStampSVG(parsed,'prev');
-    flash('Carimbo recriado ✓','stampMsg');
+    flash('Stamp recreated ✓','stampMsg');
   }catch(err){
-    flash('Leitura indisponível aqui — a foto fica guardada na mesma.','stampMsg');
+    flash('AI reading unavailable here — the photo is still saved.','stampMsg');
   }
   btn.disabled=false;
 });
@@ -715,11 +715,11 @@ $('importFile').addEventListener('change',async e=>{
   try{
     if(/\.(xml|uddf)$/i.test(f.name)||text.trim().startsWith('<')){imported=parseDiveXML(text)}
     else{imported=parseDiveCSV(text)}
-  }catch(err){flash('Não consegui interpretar este ficheiro.','dashMsg');e.target.value='';return}
-  if(!imported.length){flash('Não encontrei mergulhos no ficheiro.','dashMsg');e.target.value='';return}
+  }catch(err){flash('I couldn\'t parse this file.','dashMsg');e.target.value='';return}
+  if(!imported.length){flash('No dives found in the file.','dashMsg');e.target.value='';return}
   const fresh=imported.filter(d=>!isDupe(d));
   const dupes=imported.length-fresh.length;
-  if(!fresh.length){flash('Todos os '+imported.length+' mergulhos do ficheiro já existem nos registos — nada a importar.','dashMsg');e.target.value='';return}
+  if(!fresh.length){flash('All '+imported.length+' dives in the file already exist in your log — nothing to import.','dashMsg');e.target.value='';return}
   pendingImport=fresh;
   showImportPreview(fresh,dupes);
   e.target.value='';
@@ -728,10 +728,10 @@ $('importFile').addEventListener('change',async e=>{
 function showImportPreview(list,dupes){
   const dates=list.map(d=>d.date).filter(Boolean).sort();
   let range=dates.length?(fmtDate(dates[0])+(dates.length>1&&dates[0]!==dates[dates.length-1]?' – '+fmtDate(dates[dates.length-1]):'')):'';
-  $('importSummary').textContent='Encontrei '+list.length+' mergulho(s) novo(s)'+(range?' entre '+range:'')+(dupes?' — '+dupes+' já existente(s) ignorado(s)':'')+'. Confirma antes de adicionar aos registos:';
+  $('importSummary').textContent='Found '+list.length+' new dive(s)'+(range?' between '+range:'')+(dupes?' — '+dupes+' already in your log, skipped':'')+'. Review before adding:';
   const rows=list.slice(0,5).map(d=>'<div><span>'+(d.date?fmtDate(d.date):'—')+'</span><span>'+(d.depth?d.depth+' m':'—')+'</span><span>'+(d.time?d.time+' min':'—')+'</span></div>').join('');
-  $('importPreview').innerHTML='<div class="import-list">'+rows+'</div>'+(list.length>5?'<div class="import-more">… e mais '+(list.length-5)+'</div>':'');
-  $('confirmImportBtn').textContent='Importar '+list.length;
+  $('importPreview').innerHTML='<div class="import-list">'+rows+'</div>'+(list.length>5?'<div class="import-more">… and '+(list.length-5)+' more</div>':'');
+  $('confirmImportBtn').textContent='Import '+list.length;
   $('importModal').style.display='flex';
 }
 function cancelImport(){pendingImport=[];$('importModal').style.display='none'}
@@ -752,7 +752,7 @@ $('confirmImportBtn').addEventListener('click',async()=>{
   pendingImport=[];
   $('importModal').style.display='none';
   await persist();render();drawMarkers();
-  showSnackbar(n+' mergulho(s) importado(s)');
+  showSnackbar(n+' dive(s) imported');
 });
 
 function showSnackbar(text){
@@ -802,7 +802,7 @@ function parseDiveCSV(text){
     if(iDepth>-1)d.depth=num(c[iDepth]);
     if(iDur>-1){let t=num(c[iDur]); if(String(c[iDur]).includes(':')){const p=c[iDur].split(':');t=(+p[0])*60+(+p[1]);t=Math.round(t/60)} d.time=t}
     if(iTemp>-1)d.temp=num(c[iTemp]);
-    if(!d.site)d.site='(importado — sítio por preencher)';
+    if(!d.site)d.site='(imported — site to fill in)';
     if(d.date||d.depth)out.push(d);
   }
   return out;
@@ -825,7 +825,7 @@ function parseDiveXML(text){
     const t=dv.querySelector('divetemperature');
     if(t&&t.getAttribute('water'))d.temp=num(t.getAttribute('water'));
     const sid=dv.getAttribute('divesiteid');
-    d.site=(sid&&sites[sid])||'(importado — sítio por preencher)';
+    d.site=(sid&&sites[sid])||'(imported — site to fill in)';
     // UDDF dentro de <dive>
     const gd=dv.querySelector('greatestdepth');
     if(gd)d.depth=num(gd.textContent);
@@ -847,7 +847,7 @@ function paint(){document.querySelectorAll('#rating .bubble').forEach(b=>b.class
 // ---------- Guardar (novo ou edição) ----------
 $('saveBtn').addEventListener('click',async()=>{
   const site=$('fSite').value.trim();
-  if(!site){flash('Falta o sítio do mergulho.');$('fSite').focus();return}
+  if(!site){flash('The dive site is missing.');$('fSite').focus();return}
   const obj={
     num:$('fNum').value,date:$('fDate').value,site,type:$('fType').value,
     depth:$('fDepth').value,time:$('fTime').value,temp:$('fTemp').value,vis:$('fVis').value,
@@ -868,12 +868,12 @@ $('saveBtn').addEventListener('click',async()=>{
   const saved=editingId?entries.find(x=>x.id===editingId):entries[entries.length-1];
   await persist();render();drawMarkers();closeForm();
   if(saved)pushOne(saved);
-  flash('Mergulho guardado ✓','dashMsg');
+  flash('Dive saved ✓','dashMsg');
 });
 
 function editEntry(id){const e=entries.find(x=>x.id===id);if(e)openForm(e)}
 async function delEntry(id){
-  if(!confirm('Apagar este registo?'))return;
+  if(!confirm('Delete this dive?'))return;
   entries=entries.filter(e=>e.id!==id);
   deletedIds.push(String(id));
   await saveDeleted();
@@ -889,7 +889,7 @@ $('exportBtn').addEventListener('click',()=>{
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='dive-logbook-backup.json';a.click();
   URL.revokeObjectURL(a.href);
-  flash('Cópia de segurança descarregada ✓','dashMsg');
+  flash('Backup downloaded ✓','dashMsg');
 });
 
 // ---------- Render ----------
@@ -899,39 +899,39 @@ function render(){
   $('stDepth').textContent=maxD?maxD.toFixed(1)+' m':'–';
   $('stTime').textContent=entries.reduce((s,e)=>s+(+e.time||0),0);
   const log=$('log');
-  if(!entries.length){log.innerHTML='<div class="empty">Ainda não há mergulhos registados.<br>Ko Tao está à espera. 🤿<div class="empty-actions"><button class="btn" onclick="openForm()">＋ Adicionar o primeiro mergulho</button><button class="btn btn-ghost" onclick="document.getElementById(\'importFile\').click()">⌵ Importar do computador</button></div></div>';return}
+  if(!entries.length){log.innerHTML='<div class="empty">No dives logged yet.<br>The ocean is waiting. 🤿<div class="empty-actions"><button class="btn" onclick="openForm()">＋ Add your first dive</button><button class="btn btn-ghost" onclick="document.getElementById(\'importFile\').click()">⌵ Import from dive computer</button></div></div>';return}
   const sorted=[...entries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.id-a.id);
   log.innerHTML=sorted.map(e=>{
     const cons=(e.pStart&&e.pEnd)?(e.pStart-e.pEnd):null;
     const bb=[1,2,3,4,5].map(v=>'<i class="'+(v<=e.rating?'':'off')+'" style="width:'+(8+v*2)+'px;height:'+(8+v*2)+'px"></i>').join('');
-    const gear=[e.suit?'fato <strong>'+esc(e.suit)+' mm</strong>':null,
-      e.tankL?'garrafa <strong>'+esc(e.tankL)+' L '+esc(e.tankMat||'')+'</strong>':null,
-      e.weights?'pesos <strong>'+esc(e.weights)+' kg</strong>':null].filter(Boolean).join(' · ');
+    const gear=[e.suit?'wetsuit <strong>'+esc(e.suit)+' mm</strong>':null,
+      e.tankL?'tank <strong>'+esc(e.tankL)+' L '+esc(e.tankMat||'')+'</strong>':null,
+      e.weights?'weights <strong>'+esc(e.weights)+' kg</strong>':null].filter(Boolean).join(' · ');
     let media='';
     if(e.photoLog||e.photoStamp||e.stamp){
       media='<div class="entry-media">'
         +(e.stamp?makeStampSVG(e.stamp,String(e.id)):'')
-        +(e.photoStamp?'<img class="stamp-small" src="'+e.photoStamp+'" alt="Carimbo original" title="Carimbo original" onclick="openPhoto('+e.id+',\'stamp\')">':'')
-        +(e.photoLog?'<span class="chip" onclick="openPhoto('+e.id+',\'log\')">📎 página do logbook</span>':'')
+        +(e.photoStamp?'<img class="stamp-small" src="'+e.photoStamp+'" alt="Original stamp" title="Original stamp" onclick="openPhoto('+e.id+',\'stamp\')">':'')
+        +(e.photoLog?'<span class="chip" onclick="openPhoto('+e.id+',\'log\')">📎 paper logbook page</span>':'')
         +'</div>';
     }
     return '<article class="entry"><div class="entry-top"><div>'
-      +'<div class="entry-num">Dive #'+esc(e.num)+' · '+esc(e.type||'')+(e.imported?'<span class="tag-import">importado</span>':'')+'</div>'
+      +'<div class="entry-num">Dive #'+esc(e.num)+' · '+esc(e.type||'')+(e.imported?'<span class="tag-import">imported</span>':'')+'</div>'
       +'<div class="entry-site">'+esc(e.site)+'</div>'
-      +'<div class="entry-date">'+fmtDate(e.date)+(e.vis?' · visibilidade '+esc(e.vis)+' m':'')+'</div>'
+      +'<div class="entry-date">'+fmtDate(e.date)+(e.vis?' · visibility '+esc(e.vis)+' m':'')+'</div>'
       +'</div><div class="mini" title="'+e.rating+'/5">'+bb+'</div></div>'
       +'<div class="readout">'
-      +(e.depth?'<div><small>Prof. máx</small><b>'+esc(e.depth)+' m</b></div>':'')
-      +(e.time?'<div><small>Tempo</small><b>'+esc(e.time)+' min</b></div>':'')
-      +(e.temp?'<div><small>Água</small><b>'+esc(e.temp)+' °C</b></div>':'')
-      +(cons!==null?'<div><small>Ar usado</small><b>'+cons+' bar</b></div>':'')
+      +(e.depth?'<div><small>Max depth</small><b>'+esc(e.depth)+' m</b></div>':'')
+      +(e.time?'<div><small>Time</small><b>'+esc(e.time)+' min</b></div>':'')
+      +(e.temp?'<div><small>Water</small><b>'+esc(e.temp)+' °C</b></div>':'')
+      +(cons!==null?'<div><small>Air used</small><b>'+cons+' bar</b></div>':'')
       +'</div>'
       +(gear?'<div class="gear">'+gear+'</div>':'')
       +(e.notes?'<div class="notes">'+esc(e.notes)+'</div>':'')
       +media
       +'<div class="entry-foot"><span class="buddy">'+esc(e.buddy||'')+'</span>'
-      +'<span class="foot-actions"><button class="link-btn" onclick="editEntry('+e.id+')">editar</button>'
-      +'<button class="link-btn danger" onclick="delEntry('+e.id+')">apagar</button></span></div></article>';
+      +'<span class="foot-actions"><button class="link-btn" onclick="editEntry('+e.id+')">edit</button>'
+      +'<button class="link-btn danger" onclick="delEntry('+e.id+')">delete</button></span></div></article>';
   }).join('');
 }
 

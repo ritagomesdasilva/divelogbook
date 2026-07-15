@@ -75,6 +75,8 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
 .entry-media svg{width:84px;height:auto}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--deep);background:var(--shallow);border:1px solid var(--line);border-radius:20px;padding:5px 12px;cursor:pointer;font-weight:500}
 .chip:hover{background:#DEEFEF}
+.chip.warn{background:#FFF6E5;border-color:#F2C063;color:#8A5A00;font-weight:600}
+.chip.warn:hover{background:#FFEFCF}
 .entry-foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:8px}
 .buddy{font-size:12px;color:var(--muted)}
 .foot-actions{display:flex;gap:10px}
@@ -298,7 +300,7 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
       <button class="close-x" onclick="closeAuth()" aria-label="Close">×</button>
     </div>
     <div id="authLoggedOut">
-      <p class="import-summary">👋 Welcome! With a free account, your dives are stored in the cloud and available on any device. No passwords: you get a <b>magic link</b> by email.</p>
+      <p class="import-summary" id="authIntro">👋 Welcome! With a free account, your dives are stored in the cloud and available on any device. No passwords: you get a <b>magic link</b> by email.</p>
       <div style="margin-bottom:12px"><label for="authEmail">Your email</label><input type="email" id="authEmail" placeholder="name@example.com" autocomplete="email"></div>
       <div class="actions">
         <button class="btn" id="authSendBtn">Send magic link</button>
@@ -410,7 +412,16 @@ function updateAccountUI(){
   const chip=$('accountChip');
   if(!sb){chip.style.display='none';return}
   chip.style.display='inline-flex';
-  chip.textContent=user?'☁️ '+(user.email||'').split('@')[0]+' ✓':'☁️ Sign in to sync';
+  if(user){
+    chip.textContent='☁️ '+(user.email||'').split('@')[0]+' ✓';
+    chip.classList.remove('warn');
+  }else if(entries.length){
+    chip.textContent='⚠️ '+entries.length+' dive'+(entries.length>1?'s':'')+' not backed up';
+    chip.classList.add('warn');
+  }else{
+    chip.textContent='☁️ Sign in to sync';
+    chip.classList.remove('warn');
+  }
   $('authLoggedOut').style.display=user?'none':'block';
   $('authLoggedIn').style.display=user?'block':'none';
   if(user)$('authUserEmail').textContent=user.email||'';
@@ -418,6 +429,9 @@ function updateAccountUI(){
 function openAuth(){
   if(!sb){alert('Sync is not configured in this installation yet (see SETUP.md). Your data is stored on this device.');return}
   $('authMsg').textContent='';
+  $('authIntro').innerHTML=(!user&&entries.length)?
+    '⚠️ You have <b>'+entries.length+' dive'+(entries.length>1?'s':'')+'</b> stored only on this device — if the browser data is cleared, they\'re gone. Sign in and they\'ll be safely backed up and available everywhere. No passwords: you get a <b>magic link</b> by email.':
+    '👋 Welcome! With a free account, your dives are stored in the cloud and available on any device. No passwords: you get a <b>magic link</b> by email.';
   updateAccountUI();
   $('authModal').style.display='flex';
 }
@@ -894,6 +908,7 @@ $('exportBtn').addEventListener('click',()=>{
 
 // ---------- Render ----------
 function render(){
+  if(typeof updateAccountUI==='function'&&$('accountChip'))updateAccountUI();
   $('stTotal').textContent=entries.length;
   const maxD=Math.max(0,...entries.map(e=>+e.depth||0));
   $('stDepth').textContent=maxD?maxD.toFixed(1)+' m':'–';

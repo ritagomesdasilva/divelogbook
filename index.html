@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dive Logbook · Rita</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--ink:#07222E;--deep:#0E4C5C;--mid:#1E7A8C;--aqua:#8FD9DB;--shallow:#EAF5F5;--card:#FDFBF6;--line:#D6E6E6;--coral:#FF6B4A;--muted:#5B7A82}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--shallow);color:var(--ink);min-height:100vh}
+header{background:linear-gradient(180deg,#BFE8E6 0%,#4FA7B3 35%,#0E4C5C 78%,#07222E 100%);color:#fff;padding:42px 24px 36px;position:relative}
+.ticks{position:absolute;top:0;right:14px;bottom:0;display:flex;flex-direction:column;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.55);text-align:right;padding:10px 0}
+.ticks span::after{content:" —"}
+.wrap{max-width:820px;margin:0 auto;position:relative}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(26px,5vw,38px);letter-spacing:-.5px}
+.sub{font-size:13px;opacity:.85;margin-top:6px}
+.stats{display:flex;gap:30px;margin-top:24px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace}
+.stat b{font-size:22px;font-weight:600;display:block}
+.stat span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.75}
+main{max-width:820px;margin:0 auto;padding:24px 20px 72px}
+.dash-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:4px 0 0}
+.btn{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px;border:none;cursor:pointer;background:var(--deep);color:#fff;box-shadow:0 4px 14px rgba(7,34,46,.18)}
+.btn:hover{background:var(--mid)}
+.btn:disabled{opacity:.5;cursor:wait}
+.btn-ghost{background:var(--card);color:var(--deep);border:1px solid var(--line);font-size:13px;padding:9px 14px;box-shadow:none}
+.btn-mini{font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--mid);background:#fff;color:var(--deep);cursor:pointer}
+.btn-mini:hover{background:var(--shallow)}
+.msg{font-size:13px;color:var(--mid);font-weight:500}
+h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:18px;margin-bottom:14px}
+.log-head{margin:34px 0 16px}
+fieldset{border:none;margin-bottom:24px}
+legend{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mid);margin-bottom:10px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.grid>div{min-width:0}
+input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;display:block;min-height:41px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+input,select,textarea{width:100%;max-width:100%;min-width:0;font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--mid);outline-offset:1px}
+textarea{min-height:88px;resize:vertical}
+input[type=number]{font-family:'IBM Plex Mono',monospace}
+input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
+.bubbles{display:flex;gap:8px;align-items:flex-end}
+.bubble{border:2px solid var(--mid);border-radius:50%;background:transparent;cursor:pointer;transition:transform .15s,background .15s;padding:0}
+.bubble:nth-child(1){width:20px;height:20px}.bubble:nth-child(2){width:24px;height:24px}.bubble:nth-child(3){width:28px;height:28px}.bubble:nth-child(4){width:32px;height:32px}.bubble:nth-child(5){width:36px;height:36px}
+.bubble:hover{transform:translateY(-3px)}
+.bubble.on{background:radial-gradient(circle at 32% 30%,#fff 0 18%,var(--aqua) 55%,var(--mid) 100%);border-color:var(--deep)}
+.photo-row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.photo-slot{flex:1;min-width:220px}
+.thumb{margin-top:8px;max-width:150px;max-height:110px;border-radius:8px;border:1px solid var(--line);cursor:zoom-in;display:block}
+.stamp-tools,.ai-tools{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stamp-preview{margin-top:10px}
+.stamp-preview svg{max-width:170px;height:auto}
+.hint{font-size:11px;color:var(--muted);margin-top:5px}
+.entry{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:14px}
+.entry-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.entry-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mid);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.tag-import{display:inline-block;font-size:10px;background:#FFF1EC;color:var(--coral);border:1px solid #FFD5C8;border-radius:20px;padding:1px 8px;margin-left:6px;letter-spacing:.03em}
+.entry-site{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px}
+.entry-date{font-size:12px;color:var(--muted)}
+.mini{display:flex;gap:4px;align-items:flex-end}
+.mini i{display:block;border-radius:50%;background:radial-gradient(circle at 32% 30%,#fff 0 18%,var(--aqua) 55%,var(--mid) 100%)}
+.mini i.off{background:none;border:1.5px solid var(--line)}
+.readout{display:flex;gap:20px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--ink);color:var(--aqua);border-radius:8px;padding:12px 16px;margin:14px 0}
+.readout b{font-weight:600;color:#fff}
+.readout small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5)}
+.gear{font-size:13px;color:var(--muted);margin-bottom:10px}
+.gear strong{color:var(--ink);font-weight:600}
+.notes{font-size:14px;line-height:1.55;white-space:pre-wrap}
+.entry-media{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.entry-media img.stamp-small{max-width:64px;max-height:64px;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
+.entry-media svg{width:84px;height:auto}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--deep);background:var(--shallow);border:1px solid var(--line);border-radius:20px;padding:5px 12px;cursor:pointer;font-weight:500}
+.chip:hover{background:#DEEFEF}
+.entry-foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:8px}
+.buddy{font-size:12px;color:var(--muted)}
+.foot-actions{display:flex;gap:10px}
+.link-btn{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;padding:4px}
+.link-btn:hover{color:var(--deep)}
+.link-btn.danger:hover{color:var(--coral)}
+.empty{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px;border:1.5px dashed var(--line);border-radius:14px}
+#lightbox{position:fixed;inset:0;background:rgba(7,34,46,.88);display:none;align-items:center;justify-content:center;z-index:60;cursor:zoom-out;padding:20px}
+#lightbox img{max-width:95%;max-height:92vh;border-radius:10px}
+#formModal{position:fixed;inset:0;background:rgba(7,34,46,.55);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:28px 16px;overflow-y:auto}
+.modal-card{background:var(--card);border-radius:16px;padding:28px 26px;max-width:720px;width:100%;box-shadow:0 20px 60px rgba(7,34,46,.35);margin:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.close-x{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1;padding:4px 8px}
+.close-x:hover{color:var(--ink)}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+@media (prefers-reduced-motion: reduce){.bubble{transition:none}}
+/* ---------- FAB / menu / snackbar / import ---------- */
+.fab{position:fixed;right:20px;bottom:24px;width:58px;height:58px;border-radius:50%;border:none;background:var(--deep);color:#fff;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 8px 24px rgba(7,34,46,.35);z-index:40;display:none}
+.fab:hover{background:var(--mid)}
+.menu-wrap{position:relative}
+.menu-btn{font-size:20px;line-height:1;padding:8px 14px;letter-spacing:1px}
+.menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(7,34,46,.18);min-width:280px;z-index:45;overflow:hidden;padding:6px}
+.menu-item{display:block;width:100%;text-align:left;background:none;border:none;font-family:inherit;font-size:14px;color:var(--ink);padding:12px 14px;border-radius:8px;cursor:pointer}
+.menu-item:hover{background:var(--shallow)}
+#importModal,#authModal{position:fixed;inset:0;background:rgba(7,34,46,.55);display:none;align-items:center;justify-content:center;z-index:55;padding:20px 16px}
+.modal-sm{max-width:460px}
+.import-summary{font-size:14px;margin-bottom:12px}
+.import-list{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:6px}
+.import-list div{padding:8px 12px;display:flex;justify-content:space-between;gap:10px}
+.import-list div:nth-child(odd){background:var(--shallow)}
+.import-more{font-size:11px;color:var(--muted);margin-bottom:8px}
+.snackbar{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--ink);color:#fff;border-radius:12px;padding:12px 18px;display:flex;gap:16px;align-items:center;font-size:13px;box-shadow:0 10px 30px rgba(7,34,46,.4);z-index:70;max-width:92vw}
+.snackbar button{background:none;border:none;color:var(--aqua);font-weight:600;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+.empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.map-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.map-card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+#map{height:280px;width:100%;background:var(--shallow)}
+.leaflet-popup-content{font-family:'IBM Plex Sans',sans-serif;font-size:13px}
+.leaflet-popup-content b{font-family:'Bricolage Grotesque',sans-serif}
+@media (max-width:640px){
+  .desktop-only{display:none}
+  .fab{display:block}
+  main{padding-bottom:110px}
+  .snackbar{bottom:96px}
+}
+@media (max-width:520px){
+  header{padding:34px 18px 30px}
+  main{padding:20px 14px 64px}
+  .entry{padding:16px 16px}
+  .modal-card{padding:22px 16px}
+  #formModal{padding:16px 10px}
+  .readout{gap:14px;padding:11px 13px}
+  .stats{gap:22px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="ticks"><span>0 m</span><span>10</span><span>20</span><span>30</span></div>
+  <div class="wrap">
+    <h1>Dive Logbook</h1>
+    <div class="sub">Registo pessoal de mergulhos · Rita</div>
+    <div class="stats">
+      <div class="stat"><b id="stTotal">0</b><span>mergulhos</span></div>
+      <div class="stat"><b id="stDepth">–</b><span>prof. máx</span></div>
+      <div class="stat"><b id="stTime">0</b><span>min de fundo</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="dash-actions">
+    <button class="btn desktop-only" id="addBtn">＋ Adicionar mergulho</button>
+    <div class="menu-wrap">
+      <button class="btn btn-ghost menu-btn" id="menuBtn" aria-label="Mais opções" aria-haspopup="true">⋯</button>
+      <div class="menu" id="menu" style="display:none">
+        <button class="menu-item" onclick="closeMenu();document.getElementById('importFile').click()">⌵ Importar do computador de mergulho</button>
+        <button class="menu-item" id="exportBtn">🛟 Guardar cópia de segurança</button>
+        <button class="menu-item" onclick="closeMenu();openAuth()">☁️ Conta e sincronização</button>
+      </div>
+    </div>
+    <input type="file" id="importFile" accept=".csv,.xml,.uddf,.txt" style="display:none">
+    <button class="chip" id="accountChip" style="display:none" onclick="openAuth()">☁️ Entrar para sincronizar</button>
+    <span class="msg" id="dashMsg"></span>
+  </div>
+
+  <div class="log-head map-head"><h2>Onde já mergulhei</h2><button class="btn-mini" id="mapUpdateBtn">📍 Atualizar mapa</button></div>
+  <div class="map-card">
+    <div id="map"></div>
+    <div class="hint" id="mapHint" style="padding:8px 12px"></div>
+  </div>
+
+  <div class="log-head"><h2>Registos</h2></div>
+  <div id="log"></div>
+</main>
+
+<button class="fab" id="fabBtn" aria-label="Adicionar mergulho">＋</button>
+
+<!-- ---------- Modal: confirmação de importação ---------- -->
+<div id="importModal">
+  <div class="modal-card modal-sm">
+    <div class="modal-head">
+      <h2 style="margin:0">Importar mergulhos</h2>
+      <button class="close-x" onclick="cancelImport()" aria-label="Fechar">×</button>
+    </div>
+    <p class="import-summary" id="importSummary"></p>
+    <div id="importPreview"></div>
+    <div class="actions">
+      <button class="btn" id="confirmImportBtn">Importar</button>
+      <button class="btn btn-ghost" onclick="cancelImport()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="snackbar" id="snackbar" style="display:none">
+  <span id="snackText"></span>
+  <button id="snackUndo">Anular</button>
+</div>
+
+<!-- ---------- Modal: novo mergulho / editar ---------- -->
+<div id="formModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="formTitle" style="margin:0">Novo mergulho</h2>
+      <button class="close-x" onclick="closeForm()" aria-label="Fechar">×</button>
+    </div>
+
+    <fieldset>
+      <legend>Identificação</legend>
+      <div class="grid">
+        <div><label for="fNum">Nº do mergulho</label><input type="number" id="fNum" min="1"></div>
+        <div><label for="fDate">Data</label><input type="date" id="fDate"></div>
+        <div style="grid-column:1/-1"><label for="fSite">Sítio</label><input type="text" id="fSite" placeholder="ex.: Chumphon Pinnacle, Ko Tao"></div>
+        <div><label for="fType">Tipo</label>
+          <select id="fType"><option>Barco</option><option>Costa</option><option>Noturno</option><option>Profundo</option><option>Naufrágio</option><option>Treino / curso</option></select>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Perfil do mergulho</legend>
+      <div class="grid">
+        <div><label for="fDepth">Prof. máx (m)</label><input type="number" id="fDepth" step="0.1" min="0"></div>
+        <div><label for="fTime">Tempo de fundo (min)</label><input type="number" id="fTime" min="0"></div>
+        <div><label for="fTemp">Temp. água (°C)</label><input type="number" id="fTemp" step="0.5"></div>
+        <div><label for="fVis">Visibilidade (m)</label><input type="number" id="fVis" min="0"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Equipamento</legend>
+      <div class="grid">
+        <div><label for="fSuit">Fato (mm)</label><input type="number" id="fSuit" step="0.5" min="0" placeholder="3"></div>
+        <div><label for="fTankL">Garrafa (L)</label><input type="number" id="fTankL" placeholder="12"></div>
+        <div><label for="fTankMat">Material</label><select id="fTankMat"><option>Alumínio</option><option>Aço</option></select></div>
+        <div><label for="fWeights">Pesos (kg)</label><input type="number" id="fWeights" step="0.5" min="0"></div>
+        <div><label for="fPStart">Pressão inicial (bar)</label><input type="number" id="fPStart" placeholder="200"></div>
+        <div><label for="fPEnd">Pressão final (bar)</label><input type="number" id="fPEnd" placeholder="50"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Fotos &amp; carimbo</legend>
+      <div class="photo-row">
+        <div class="photo-slot">
+          <label for="fPhotoLog">Foto da página do logbook de papel</label>
+          <input type="file" id="fPhotoLog" accept="image/*">
+          <img id="thumbLog" class="thumb" style="display:none" alt="Foto do logbook">
+          <div class="ai-tools" id="aiTools" style="display:none">
+            <button type="button" class="btn-mini" id="fillFromPhotoBtn">✨ Preencher campos a partir da foto</button>
+            <span class="msg" id="aiMsg"></span>
+          </div>
+        </div>
+        <div class="photo-slot">
+          <label for="fPhotoStamp">Foto do carimbo do centro de mergulho</label>
+          <input type="file" id="fPhotoStamp" accept="image/*">
+          <img id="thumbStamp" class="thumb" style="display:none" alt="Foto do carimbo">
+          <div class="stamp-tools" id="stampTools" style="display:none">
+            <button type="button" class="btn-mini" id="readStampBtn">✨ Ler carimbo e recriar digital</button>
+            <span class="msg" id="stampMsg"></span>
+          </div>
+          <div class="stamp-preview" id="stampPreview"></div>
+        </div>
+      </div>
+      <div class="hint">As funções ✨ leem as fotos com IA (sem inventar dados) — disponíveis no preview do Claude.</div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Notas &amp; vida marinha</legend>
+      <textarea id="fNotes" placeholder="O que aconteceu, animais que vi, sensações, ajustes de lastro..."></textarea>
+      <div class="grid" style="margin-top:10px">
+        <div style="grid-column:1/-1"><label for="fBuddy">Buddy / centro de mergulho</label><input type="text" id="fBuddy" placeholder="ex.: instrutor João · Big Blue Diving"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Rating</legend>
+      <div class="bubbles" id="rating">
+        <button type="button" class="bubble" data-v="1" aria-label="1 de 5"></button>
+        <button type="button" class="bubble" data-v="2" aria-label="2 de 5"></button>
+        <button type="button" class="bubble" data-v="3" aria-label="3 de 5"></button>
+        <button type="button" class="bubble" data-v="4" aria-label="4 de 5"></button>
+        <button type="button" class="bubble" data-v="5" aria-label="5 de 5"></button>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button class="btn" id="saveBtn">Registar mergulho</button>
+      <button class="btn btn-ghost" onclick="closeForm()">Cancelar</button>
+      <span class="msg" id="msg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Modal: conta / login ---------- -->
+<div id="authModal">
+  <div class="modal-card modal-sm">
+    <div class="modal-head">
+      <h2 style="margin:0">☁️ A tua conta</h2>
+      <button class="close-x" onclick="closeAuth()" aria-label="Fechar">×</button>
+    </div>
+    <div id="authLoggedOut">
+      <p class="import-summary">Com uma conta, os teus mergulhos ficam guardados na nuvem e disponíveis em qualquer dispositivo. Sem passwords: recebes um <b>link mágico</b> no email.</p>
+      <div style="margin-bottom:12px"><label for="authEmail">O teu email</label><input type="email" id="authEmail" placeholder="nome@exemplo.com" autocomplete="email"></div>
+      <div class="actions">
+        <button class="btn" id="authSendBtn">Enviar link mágico</button>
+        <button class="btn btn-ghost" onclick="closeAuth()">Usar sem conta</button>
+      </div>
+      <div class="hint" style="margin-top:10px">Sem conta, os registos ficam guardados apenas neste dispositivo.</div>
+    </div>
+    <div id="authLoggedIn" style="display:none">
+      <p class="import-summary">Sessão iniciada como <b id="authUserEmail"></b>.<br>Os teus mergulhos sincronizam automaticamente.</p>
+      <div class="actions">
+        <button class="btn btn-ghost" id="authSignOutBtn">Terminar sessão</button>
+        <button class="btn btn-ghost" onclick="cloudSync(true);closeAuth()">Sincronizar agora</button>
+      </div>
+    </div>
+    <div class="msg" id="authMsg" style="margin-top:10px;display:block"></div>
+  </div>
+</div>
+
+<div id="lightbox" onclick="this.style.display='none'"><img id="lightboxImg" alt=""></div>
+
+<script>
+const KEY='dive-logbook-entries';
+let entries=[];
+let rating=0;
+let photoLog=null, photoStamp=null, stampData=null, editingId=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const flash=(t,el)=>{const m=$(el||'msg');m.textContent=t;setTimeout(()=>m.textContent='',4000)};
+const fmtDate=d=>{if(!d)return'';const[y,m,dd]=d.split('-');return dd+'/'+m+'/'+y};
+
+// ---------- Storage (Claude preview ou local) ----------
+const hasWS = typeof window.storage !== 'undefined';
+async function loadEntries(){
+  if(hasWS){
+    try{const r=await window.storage.get(KEY);entries=r&&r.value?JSON.parse(r.value):[]}catch(e){entries=[]}
+  }else{
+    try{entries=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){entries=[]}
+  }
+}
+async function persist(){
+  const json=JSON.stringify(entries);
+  if(json.length>4500000){flash('Espaço quase cheio — exporta e limpa registos antigos.','dashMsg')}
+  try{
+    if(hasWS){await window.storage.set(KEY,json)}
+    else{localStorage.setItem(KEY,json)}
+  }catch(e){flash('Não consegui guardar — espaço cheio? Exporta o JSON.','dashMsg')}
+}
+
+// ---------- Modal ----------
+function openForm(entry){
+  editingId=entry?entry.id:null;
+  $('formTitle').textContent=entry?'Editar mergulho #'+(entry.num||''):'Novo mergulho';
+  $('saveBtn').textContent=entry?'Guardar alterações':'Registar mergulho';
+  clearFormFields();
+  if(entry){
+    $('fNum').value=entry.num||'';$('fDate').value=entry.date||'';$('fSite').value=entry.site||'';
+    $('fType').value=entry.type||'Barco';$('fDepth').value=entry.depth||'';$('fTime').value=entry.time||'';
+    $('fTemp').value=entry.temp||'';$('fVis').value=entry.vis||'';$('fSuit').value=entry.suit||'';
+    $('fTankL').value=entry.tankL||'';$('fTankMat').value=entry.tankMat||'Alumínio';
+    $('fWeights').value=entry.weights||'';$('fPStart').value=entry.pStart||'';$('fPEnd').value=entry.pEnd||'';
+    $('fNotes').value=entry.notes||'';$('fBuddy').value=entry.buddy||'';
+    rating=entry.rating||0;paint();
+    photoLog=entry.photoLog||null;photoStamp=entry.photoStamp||null;stampData=entry.stamp||null;
+    if(photoLog){$('thumbLog').src=photoLog;$('thumbLog').style.display='block';$('aiTools').style.display='flex'}
+    if(photoStamp){$('thumbStamp').src=photoStamp;$('thumbStamp').style.display='block';$('stampTools').style.display='flex'}
+    if(stampData){$('stampPreview').innerHTML=makeStampSVG(stampData,'prev')}
+  }else{
+    $('fDate').value=new Date().toISOString().slice(0,10);
+    $('fNum').value=entries.length?Math.max(...entries.map(x=>+x.num||0))+1:1;
+  }
+  $('formModal').style.display='flex';
+}
+function closeForm(){$('formModal').style.display='none';editingId=null}
+$('addBtn').addEventListener('click',()=>openForm());
+$('fabBtn').addEventListener('click',()=>openForm());
+$('menuBtn').addEventListener('click',e=>{
+  e.stopPropagation();
+  const m=$('menu');
+  m.style.display=m.style.display==='none'?'block':'none';
+});
+function closeMenu(){$('menu').style.display='none'}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.menu-wrap'))closeMenu();
+});
+
+
+// ---------- Nuvem (Supabase) ----------
+// Preencher depois de criar o projeto no Supabase (ver SETUP.md). Vazio = modo local.
+const SUPABASE_URL='';
+const SUPABASE_KEY='';
+let sb=null,user=null,deletedIds=[];
+const DEL_KEY='dive-deleted-ids';
+if(SUPABASE_URL&&SUPABASE_KEY&&typeof supabase!=='undefined'){
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+}
+async function loadDeleted(){
+  try{
+    if(hasWS){const r=await window.storage.get(DEL_KEY);deletedIds=r&&r.value?JSON.parse(r.value):[]}
+    else{deletedIds=JSON.parse(localStorage.getItem(DEL_KEY)||'[]')}
+  }catch(e){deletedIds=[]}
+}
+async function saveDeleted(){
+  try{
+    if(hasWS){await window.storage.set(DEL_KEY,JSON.stringify(deletedIds))}
+    else{localStorage.setItem(DEL_KEY,JSON.stringify(deletedIds))}
+  }catch(e){}
+}
+function updateAccountUI(){
+  const chip=$('accountChip');
+  if(!sb){chip.style.display='none';return}
+  chip.style.display='inline-flex';
+  chip.textContent=user?'☁️ '+(user.email||'').split('@')[0]+' ✓':'☁️ Entrar para sincronizar';
+  $('authLoggedOut').style.display=user?'none':'block';
+  $('authLoggedIn').style.display=user?'block':'none';
+  if(user)$('authUserEmail').textContent=user.email||'';
+}
+function openAuth(){
+  if(!sb){alert('A sincronização ainda não está configurada nesta instalação (ver SETUP.md). Os dados ficam guardados neste dispositivo.');return}
+  $('authMsg').textContent='';
+  updateAccountUI();
+  $('authModal').style.display='flex';
+}
+function closeAuth(){$('authModal').style.display='none'}
+if(sb){
+  $('authSendBtn').addEventListener('click',async()=>{
+    const email=$('authEmail').value.trim();
+    if(!email||!email.includes('@')){$('authMsg').textContent='Escreve um email válido.';return}
+    $('authMsg').textContent='A enviar…';
+    const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+    $('authMsg').textContent=error?'Não consegui enviar — tenta de novo.':'✉️ Enviado! Abre o email neste dispositivo e toca no link.';
+  });
+  $('authSignOutBtn').addEventListener('click',async()=>{
+    await sb.auth.signOut();
+    user=null;updateAccountUI();
+    $('authMsg').textContent='Sessão terminada. Os registos continuam neste dispositivo.';
+  });
+  sb.auth.onAuthStateChange((_ev,session)=>{
+    const was=!!user;
+    user=session?session.user:null;
+    updateAccountUI();
+    if(user&&!was)cloudSync(true);
+  });
+}
+async function pushOne(e){
+  if(!sb||!user)return;
+  try{
+    await sb.from('dives').upsert({user_id:user.id,id:String(e.id),payload:e,updated_at:e.updatedAt||new Date().toISOString()},{onConflict:'user_id,id'});
+  }catch(err){flash('☁️ Sem ligação — sincroniza mais tarde.','dashMsg')}
+}
+async function cloudSync(announce){
+  if(!sb||!user)return;
+  try{
+    // aplicar eliminações pendentes
+    if(deletedIds.length){
+      await sb.from('dives').delete().in('id',deletedIds.map(String));
+      deletedIds=[];await saveDeleted();
+    }
+    const {data,error}=await sb.from('dives').select('id,payload,updated_at');
+    if(error)throw error;
+    const remote={};(data||[]).forEach(r=>{remote[r.id]={p:r.payload,u:r.updated_at}});
+    const local={};entries.forEach(e=>{local[String(e.id)]=e});
+    const toPush=[];
+    for(const id in remote){
+      const l=local[id];
+      const rU=new Date(remote[id].u).getTime();
+      const lU=l&&l.updatedAt?new Date(l.updatedAt).getTime():0;
+      if(!l||rU>lU){local[id]=remote[id].p}
+      else if(lU>rU){toPush.push(l)}
+    }
+    for(const id in local){if(!remote[id])toPush.push(local[id])}
+    entries=Object.values(local);
+    if(toPush.length){
+      await sb.from('dives').upsert(toPush.map(e=>({user_id:user.id,id:String(e.id),payload:e,updated_at:e.updatedAt||new Date().toISOString()})),{onConflict:'user_id,id'});
+    }
+    await persist();render();drawMarkers();
+    if(announce)flash('☁️ Sincronizado — '+entries.length+' mergulhos.','dashMsg');
+  }catch(err){
+    if(announce)flash('☁️ Sem ligação — os dados ficam guardados localmente.','dashMsg');
+  }
+}
+
+// ---------- Mapa ----------
+const COORDS_KEY='dive-site-coords';
+let siteCoords={},map=null,markerLayer=null;
+
+async function loadCoords(){
+  try{
+    if(hasWS){const r=await window.storage.get(COORDS_KEY);siteCoords=r&&r.value?JSON.parse(r.value):{}}
+    else{siteCoords=JSON.parse(localStorage.getItem(COORDS_KEY)||'{}')}
+  }catch(e){siteCoords={}}
+}
+async function saveCoords(){
+  try{
+    if(hasWS){await window.storage.set(COORDS_KEY,JSON.stringify(siteCoords))}
+    else{localStorage.setItem(COORDS_KEY,JSON.stringify(siteCoords))}
+  }catch(e){}
+}
+function initMap(){
+  if(map||typeof L==='undefined')return;
+  map=L.map('map',{scrollWheelZoom:false}).setView([20,0],2);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap',maxZoom:18
+  }).addTo(map);
+  markerLayer=L.layerGroup().addTo(map);
+}
+function drawMarkers(){
+  if(!map)return;
+  markerLayer.clearLayers();
+  const bySite={};
+  entries.forEach(e=>{
+    const s=(e.site||'').trim();
+    if(!s||s.startsWith('(importado'))return;
+    if(!bySite[s])bySite[s]={count:0,best:0};
+    bySite[s].count++;
+    bySite[s].best=Math.max(bySite[s].best,e.rating||0);
+  });
+  const pts=[];
+  for(const s in bySite){
+    const c=siteCoords[s];
+    if(!c)continue;
+    pts.push([c.lat,c.lng]);
+    const stars='🫧'.repeat(bySite[s].best||0);
+    L.circleMarker([c.lat,c.lng],{radius:9,color:'#0E4C5C',weight:2,fillColor:'#8FD9DB',fillOpacity:.85})
+      .bindPopup('<b>'+esc(s)+'</b><br>'+bySite[s].count+' mergulho(s) '+stars)
+      .addTo(markerLayer);
+  }
+  if(pts.length){map.fitBounds(pts,{padding:[36,36],maxZoom:9})}
+  const missing=Object.keys(bySite).filter(s=>!siteCoords[s]).length;
+  $('mapHint').textContent=pts.length?
+    (missing?missing+' sítio(s) por localizar — toca em "📍 Atualizar mapa" (precisa de internet).':''):
+    'Sem sítios localizados ainda. Regista mergulhos e toca em "📍 Atualizar mapa".';
+}
+$('mapUpdateBtn').addEventListener('click',async()=>{
+  const btn=$('mapUpdateBtn');btn.disabled=true;
+  const sites=[...new Set(entries.map(e=>(e.site||'').trim()).filter(s=>s&&!s.startsWith('(importado')))];
+  const missing=sites.filter(s=>!siteCoords[s]);
+  let found=0;
+  for(const s of missing){
+    try{
+      $('mapHint').textContent='A localizar: '+s+'…';
+      const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(s));
+      const j=await r.json();
+      if(j&&j[0]){siteCoords[s]={lat:+j[0].lat,lng:+j[0].lon};found++}
+      else{siteCoords[s]=null} // marca como tentado; evita repetir sempre
+      await new Promise(r=>setTimeout(r,1100)); // respeitar rate limit do Nominatim
+    }catch(err){
+      $('mapHint').textContent='Sem acesso ao serviço de localização aqui — tenta com o ficheiro aberto no browser, com internet.';
+      btn.disabled=false;return;
+    }
+  }
+  // limpa nulls para poderem ser tentados noutra altura se quiseres corrigir o nome
+  for(const s in siteCoords){if(siteCoords[s]===null)delete siteCoords[s]}
+  await saveCoords();
+  drawMarkers();
+  const notFound=missing.length-found;
+  $('mapHint').textContent=(found?found+' sítio(s) localizados ✓ ':'')+(notFound?notFound+' não encontrado(s) — tenta acrescentar a ilha/país ao nome do sítio.':'');
+  btn.disabled=false;
+});
+
+function clearFormFields(){
+  ['fSite','fDepth','fTime','fTemp','fVis','fSuit','fTankL','fWeights','fPStart','fPEnd','fNotes','fBuddy','fPhotoLog','fPhotoStamp'].forEach(id=>$(id).value='');
+  rating=0;paint();
+  photoLog=null;photoStamp=null;stampData=null;
+  $('thumbLog').style.display='none';$('thumbStamp').style.display='none';
+  $('aiTools').style.display='none';$('stampTools').style.display='none';
+  $('stampPreview').innerHTML='';$('stampMsg').textContent='';$('aiMsg').textContent='';
+}
+
+// ---------- Fotos ----------
+function compressImage(file,maxSide,quality){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img'))};
+    img.src=url;
+  });
+}
+$('fPhotoLog').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  photoLog=await compressImage(f,900,0.7);
+  $('thumbLog').src=photoLog;$('thumbLog').style.display='block';
+  $('aiTools').style.display='flex';
+});
+$('fPhotoStamp').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  photoStamp=await compressImage(f,700,0.7);
+  $('thumbStamp').src=photoStamp;$('thumbStamp').style.display='block';
+  $('stampTools').style.display='flex';
+  stampData=null;$('stampPreview').innerHTML='';
+});
+
+// ---------- Lightbox ----------
+function openPhoto(id,kind){
+  const e=entries.find(x=>x.id===id); if(!e)return;
+  const src=kind==='log'?e.photoLog:e.photoStamp; if(!src)return;
+  $('lightboxImg').src=src;$('lightbox').style.display='flex';
+}
+document.addEventListener('click',e=>{
+  if(e.target.classList.contains('thumb')&&e.target.src){
+    $('lightboxImg').src=e.target.src;$('lightbox').style.display='flex';
+  }
+});
+
+// ---------- IA: chamada generica ----------
+async function askClaude(imageDataUrl,prompt){
+  const b64=imageDataUrl.split(',')[1];
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',max_tokens:1000,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  });
+  const data=await resp.json();
+  const txt=(data.content||[]).filter(i=>i.type==='text').map(i=>i.text).join('');
+  return JSON.parse(txt.replace(/```json|```/g,'').trim());
+}
+
+// ---------- IA: pre-preencher a partir da foto do logbook ----------
+$('fillFromPhotoBtn').addEventListener('click',async()=>{
+  if(!photoLog)return;
+  const btn=$('fillFromPhotoBtn');
+  btn.disabled=true;flash('A ler a página do logbook…','aiMsg');
+  try{
+    const p=await askClaude(photoLog,
+      'Analisa esta foto de uma pagina de logbook de mergulho preenchida a mao. Extrai os dados visiveis e responde APENAS com JSON valido, sem markdown: {"num":numero do mergulho ou null,"date":"yyyy-mm-dd" ou null,"site":"nome do sitio" ou null,"depth":profundidade maxima em metros (numero) ou null,"time":tempo de fundo em minutos (numero) ou null,"temp":temperatura da agua em C ou null,"vis":visibilidade em metros ou null,"suit":espessura do fato em mm ou null,"tankL":litros da garrafa ou null,"weights":pesos em kg ou null,"pStart":pressao inicial em bar ou null,"pEnd":pressao final em bar ou null,"notes":"notas/animais vistos" ou null,"buddy":"buddy ou centro de mergulho" ou null}. MUITO IMPORTANTE: usa null para tudo o que nao conseguires ler com confianca. Nao inventes nem estimes valores.');
+    const map={num:'fNum',date:'fDate',site:'fSite',depth:'fDepth',time:'fTime',temp:'fTemp',vis:'fVis',suit:'fSuit',tankL:'fTankL',weights:'fWeights',pStart:'fPStart',pEnd:'fPEnd',notes:'fNotes',buddy:'fBuddy'};
+    let n=0;
+    for(const k in map){if(p[k]!==null&&p[k]!==undefined&&p[k]!==''){$(map[k]).value=p[k];n++}}
+    flash(n?'Preenchi '+n+' campos — confirma antes de guardar ✓':'Não consegui ler dados com confiança nesta foto.','aiMsg');
+  }catch(err){
+    flash('Leitura indisponível aqui — funciona no preview do Claude.','aiMsg');
+  }
+  btn.disabled=false;
+});
+
+// ---------- IA: ler carimbo ----------
+$('readStampBtn').addEventListener('click',async()=>{
+  if(!photoStamp)return;
+  const btn=$('readStampBtn');
+  btn.disabled=true;flash('A ler o carimbo…','stampMsg');
+  try{
+    const parsed=await askClaude(photoStamp,
+      'Analisa esta foto de um carimbo (stamp) de um centro de mergulho num logbook. Extrai o texto visivel e responde APENAS com JSON valido, sem markdown: {"found":true,"shape":"round" ou "rect","topText":"texto do arco superior (normalmente nome do centro)","bottomText":"texto do arco inferior (normalmente localizacao)","centerLines":["ate 3 linhas do centro"],"inkColor":"cor aproximada da tinta em hex"}. Se nao houver carimbo legivel: {"found":false}. Nao inventes texto que nao consigas ler.');
+    if(!parsed.found){flash('Não consegui ler um carimbo nesta foto.','stampMsg');btn.disabled=false;return}
+    stampData=parsed;
+    $('stampPreview').innerHTML=makeStampSVG(parsed,'prev');
+    flash('Carimbo recriado ✓','stampMsg');
+  }catch(err){
+    flash('Leitura indisponível aqui — a foto fica guardada na mesma.','stampMsg');
+  }
+  btn.disabled=false;
+});
+
+// ---------- Gerador do carimbo digital (SVG) ----------
+function makeStampSVG(s,uid){
+  const ink=/^#[0-9A-Fa-f]{6}$/.test(s.inkColor||'')?s.inkColor:'#2B4B9B';
+  const lines=(s.centerLines||[]).slice(0,3);
+  if(s.shape==='rect'){
+    let ls=lines.map((l,i)=>'<text x="110" y="'+(92+i*20)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="13" font-weight="600" fill="'+ink+'">'+esc(l)+'</text>').join('');
+    return '<svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-5 110 110)" opacity="0.9">'
+      +'<rect x="24" y="46" width="172" height="128" rx="10" fill="none" stroke="'+ink+'" stroke-width="4"/>'
+      +'<rect x="32" y="54" width="156" height="112" rx="7" fill="none" stroke="'+ink+'" stroke-width="1.5"/>'
+      +'<text x="110" y="74" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="'+ink+'">'+esc(s.topText||'')+'</text>'
+      +ls
+      +'<text x="110" y="158" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" fill="'+ink+'">'+esc(s.bottomText||'')+'</text>'
+      +'</g></svg>';
+  }
+  let ls=lines.map((l,i)=>'<text x="110" y="'+(104+i*17-(lines.length-1)*8)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="'+ink+'">'+esc(l)+'</text>').join('');
+  return '<svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-7 110 110)" opacity="0.9">'
+    +'<circle cx="110" cy="110" r="100" fill="none" stroke="'+ink+'" stroke-width="4.5"/>'
+    +'<circle cx="110" cy="110" r="72" fill="none" stroke="'+ink+'" stroke-width="1.5"/>'
+    +'<path id="arcT'+uid+'" d="M 110 110 m -86 0 a 86 86 0 1 1 172 0" fill="none"/>'
+    +'<path id="arcB'+uid+'" d="M 110 110 m -86 0 a 86 86 0 1 0 172 0" fill="none"/>'
+    +'<text font-family="IBM Plex Mono,monospace" font-size="13.5" font-weight="600" fill="'+ink+'" letter-spacing="2"><textPath href="#arcT'+uid+'" startOffset="50%" text-anchor="middle">'+esc((s.topText||'').toUpperCase())+'</textPath></text>'
+    +'<text font-family="IBM Plex Mono,monospace" font-size="12" fill="'+ink+'" letter-spacing="2"><textPath href="#arcB'+uid+'" startOffset="50%" text-anchor="middle">'+esc((s.bottomText||'').toUpperCase())+'</textPath></text>'
+    +'<circle cx="34" cy="110" r="2.5" fill="'+ink+'"/><circle cx="186" cy="110" r="2.5" fill="'+ink+'"/>'
+    +ls
+    +'</g></svg>';
+}
+
+// ---------- Importar do computador de mergulho ----------
+let pendingImport=[],lastImportIds=[],snackTimer=null;
+
+function isDupe(d){
+  return entries.some(e=>{
+    const sameDate=d.date&&e.date&&d.date===e.date;
+    const sameNum=d.num&&e.num&&+d.num===+e.num;
+    const closeDepth=d.depth&&e.depth&&Math.abs(+d.depth-+e.depth)<=0.5;
+    const closeTime=d.time&&e.time&&Math.abs(+d.time-+e.time)<=2;
+    if(sameDate&&sameNum)return true;
+    if(sameDate&&closeDepth&&closeTime)return true;
+    if(!d.date&&sameNum)return true;
+    return false;
+  });
+}
+
+$('importFile').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const text=await f.text();
+  let imported=[];
+  try{
+    if(/\.(xml|uddf)$/i.test(f.name)||text.trim().startsWith('<')){imported=parseDiveXML(text)}
+    else{imported=parseDiveCSV(text)}
+  }catch(err){flash('Não consegui interpretar este ficheiro.','dashMsg');e.target.value='';return}
+  if(!imported.length){flash('Não encontrei mergulhos no ficheiro.','dashMsg');e.target.value='';return}
+  const fresh=imported.filter(d=>!isDupe(d));
+  const dupes=imported.length-fresh.length;
+  if(!fresh.length){flash('Todos os '+imported.length+' mergulhos do ficheiro já existem nos registos — nada a importar.','dashMsg');e.target.value='';return}
+  pendingImport=fresh;
+  showImportPreview(fresh,dupes);
+  e.target.value='';
+});
+
+function showImportPreview(list,dupes){
+  const dates=list.map(d=>d.date).filter(Boolean).sort();
+  let range=dates.length?(fmtDate(dates[0])+(dates.length>1&&dates[0]!==dates[dates.length-1]?' – '+fmtDate(dates[dates.length-1]):'')):'';
+  $('importSummary').textContent='Encontrei '+list.length+' mergulho(s) novo(s)'+(range?' entre '+range:'')+(dupes?' — '+dupes+' já existente(s) ignorado(s)':'')+'. Confirma antes de adicionar aos registos:';
+  const rows=list.slice(0,5).map(d=>'<div><span>'+(d.date?fmtDate(d.date):'—')+'</span><span>'+(d.depth?d.depth+' m':'—')+'</span><span>'+(d.time?d.time+' min':'—')+'</span></div>').join('');
+  $('importPreview').innerHTML='<div class="import-list">'+rows+'</div>'+(list.length>5?'<div class="import-more">… e mais '+(list.length-5)+'</div>':'');
+  $('confirmImportBtn').textContent='Importar '+list.length;
+  $('importModal').style.display='flex';
+}
+function cancelImport(){pendingImport=[];$('importModal').style.display='none'}
+
+$('confirmImportBtn').addEventListener('click',async()=>{
+  lastImportIds=[];
+  pendingImport.forEach((d,i)=>{
+    const id=Date.now()+i;
+    lastImportIds.push(id);
+    const obj=Object.assign({
+      id,rating:0,imported:true,updatedAt:new Date().toISOString(),
+      num:d.num||(entries.length?Math.max(...entries.map(x=>+x.num||0))+1:1)
+    },d);
+    entries.push(obj);
+    pushOne(obj);
+  });
+  const n=pendingImport.length;
+  pendingImport=[];
+  $('importModal').style.display='none';
+  await persist();render();drawMarkers();
+  showSnackbar(n+' mergulho(s) importado(s)');
+});
+
+function showSnackbar(text){
+  $('snackText').textContent=text;
+  $('snackbar').style.display='flex';
+  clearTimeout(snackTimer);
+  snackTimer=setTimeout(()=>{$('snackbar').style.display='none';lastImportIds=[]},7000);
+}
+$('snackUndo').addEventListener('click',async()=>{
+  if(lastImportIds.length){
+    entries=entries.filter(e=>!lastImportIds.includes(e.id));
+    lastImportIds=[];
+    await persist();render();
+  }
+  $('snackbar').style.display='none';
+  clearTimeout(snackTimer);
+});
+
+function normDate(s){
+  if(!s)return'';
+  s=String(s).trim();
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m)return m[1]+'-'+m[2]+'-'+m[3];
+  m=s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/); if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  return'';
+}
+const num=v=>{const n=parseFloat(String(v).replace(',','.').replace(/[^\d.\-]/g,''));return isNaN(n)?'':n};
+
+function parseDiveCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)return[];
+  const delim=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';
+  const heads=lines[0].split(delim).map(h=>h.trim().toLowerCase());
+  const idx=names=>heads.findIndex(h=>names.some(n=>h.includes(n)));
+  const iNum=idx(['dive no','number','nº','numero','dive #','#']);
+  const iDate=idx(['date','data']);
+  const iSite=idx(['site','location','sítio','sitio','local','place']);
+  const iDepth=idx(['max depth','maxdepth','depth','prof']);
+  const iDur=idx(['duration','dive time','divetime','bottom','tempo']);
+  const iTemp=idx(['temp']);
+  const out=[];
+  for(let i=1;i<lines.length;i++){
+    const c=lines[i].split(delim);
+    const d={imported:true};
+    if(iNum>-1)d.num=num(c[iNum])||'';
+    if(iDate>-1)d.date=normDate(c[iDate]);
+    if(iSite>-1)d.site=(c[iSite]||'').trim().replace(/^"|"$/g,'');
+    if(iDepth>-1)d.depth=num(c[iDepth]);
+    if(iDur>-1){let t=num(c[iDur]); if(String(c[iDur]).includes(':')){const p=c[iDur].split(':');t=(+p[0])*60+(+p[1]);t=Math.round(t/60)} d.time=t}
+    if(iTemp>-1)d.temp=num(c[iTemp]);
+    if(!d.site)d.site='(importado — sítio por preencher)';
+    if(d.date||d.depth)out.push(d);
+  }
+  return out;
+}
+
+function parseDiveXML(text){
+  const doc=new DOMParser().parseFromString(text,'text/xml');
+  const out=[];
+  // Subsurface
+  const sites={};
+  doc.querySelectorAll('site').forEach(s=>{sites[s.getAttribute('uuid')]=s.getAttribute('name')});
+  doc.querySelectorAll('dive').forEach(dv=>{
+    const d={imported:true};
+    if(dv.getAttribute('number'))d.num=+dv.getAttribute('number');
+    if(dv.getAttribute('date'))d.date=normDate(dv.getAttribute('date'));
+    const dep=dv.querySelector('depth');
+    if(dep&&dep.getAttribute('max'))d.depth=num(dep.getAttribute('max'));
+    const dur=dv.getAttribute('duration');
+    if(dur){const p=dur.split(':');d.time=Math.round(+p[0]+(+p[1]||0)/60)}
+    const t=dv.querySelector('divetemperature');
+    if(t&&t.getAttribute('water'))d.temp=num(t.getAttribute('water'));
+    const sid=dv.getAttribute('divesiteid');
+    d.site=(sid&&sites[sid])||'(importado — sítio por preencher)';
+    // UDDF dentro de <dive>
+    const gd=dv.querySelector('greatestdepth');
+    if(gd)d.depth=num(gd.textContent);
+    const dt=dv.querySelector('datetime');
+    if(dt)d.date=normDate(dt.textContent);
+    const dd=dv.querySelector('diveduration');
+    if(dd)d.time=Math.round(num(dd.textContent)/60);
+    const lt=dv.querySelector('lowesttemperature');
+    if(lt){let k=num(lt.textContent);d.temp=k>200?Math.round((k-273.15)*10)/10:k}
+    if(d.date||d.depth)out.push(d);
+  });
+  return out;
+}
+
+// ---------- Rating ----------
+document.querySelectorAll('#rating .bubble').forEach(b=>b.addEventListener('click',()=>{rating=+b.dataset.v;paint()}));
+function paint(){document.querySelectorAll('#rating .bubble').forEach(b=>b.classList.toggle('on',+b.dataset.v<=rating))}
+
+// ---------- Guardar (novo ou edição) ----------
+$('saveBtn').addEventListener('click',async()=>{
+  const site=$('fSite').value.trim();
+  if(!site){flash('Falta o sítio do mergulho.');$('fSite').focus();return}
+  const obj={
+    num:$('fNum').value,date:$('fDate').value,site,type:$('fType').value,
+    depth:$('fDepth').value,time:$('fTime').value,temp:$('fTemp').value,vis:$('fVis').value,
+    suit:$('fSuit').value,tankL:$('fTankL').value,tankMat:$('fTankMat').value,
+    weights:$('fWeights').value,pStart:$('fPStart').value,pEnd:$('fPEnd').value,
+    notes:$('fNotes').value.trim(),buddy:$('fBuddy').value.trim(),rating,
+    photoLog,photoStamp,stamp:stampData,
+    updatedAt:new Date().toISOString()
+  };
+  if(editingId){
+    const i=entries.findIndex(x=>x.id===editingId);
+    if(i>-1)entries[i]=Object.assign({id:editingId},obj);
+  }else{
+    obj.id=Date.now();
+    obj.num=obj.num||(entries.length?Math.max(...entries.map(x=>+x.num||0))+1:1);
+    entries.push(obj);
+  }
+  const saved=editingId?entries.find(x=>x.id===editingId):entries[entries.length-1];
+  await persist();render();drawMarkers();closeForm();
+  if(saved)pushOne(saved);
+  flash('Mergulho guardado ✓','dashMsg');
+});
+
+function editEntry(id){const e=entries.find(x=>x.id===id);if(e)openForm(e)}
+async function delEntry(id){
+  if(!confirm('Apagar este registo?'))return;
+  entries=entries.filter(e=>e.id!==id);
+  deletedIds.push(String(id));
+  await saveDeleted();
+  await persist();render();drawMarkers();
+  if(sb&&user){
+    try{await sb.from('dives').delete().eq('id',String(id));deletedIds=deletedIds.filter(x=>x!==String(id));await saveDeleted()}catch(e){}
+  }
+}
+
+$('exportBtn').addEventListener('click',()=>{
+  closeMenu();
+  const blob=new Blob([JSON.stringify(entries,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='dive-logbook-backup.json';a.click();
+  URL.revokeObjectURL(a.href);
+  flash('Cópia de segurança descarregada ✓','dashMsg');
+});
+
+// ---------- Render ----------
+function render(){
+  $('stTotal').textContent=entries.length;
+  const maxD=Math.max(0,...entries.map(e=>+e.depth||0));
+  $('stDepth').textContent=maxD?maxD.toFixed(1)+' m':'–';
+  $('stTime').textContent=entries.reduce((s,e)=>s+(+e.time||0),0);
+  const log=$('log');
+  if(!entries.length){log.innerHTML='<div class="empty">Ainda não há mergulhos registados.<br>Ko Tao está à espera. 🤿<div class="empty-actions"><button class="btn" onclick="openForm()">＋ Adicionar o primeiro mergulho</button><button class="btn btn-ghost" onclick="document.getElementById(\'importFile\').click()">⌵ Importar do computador</button></div></div>';return}
+  const sorted=[...entries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.id-a.id);
+  log.innerHTML=sorted.map(e=>{
+    const cons=(e.pStart&&e.pEnd)?(e.pStart-e.pEnd):null;
+    const bb=[1,2,3,4,5].map(v=>'<i class="'+(v<=e.rating?'':'off')+'" style="width:'+(8+v*2)+'px;height:'+(8+v*2)+'px"></i>').join('');
+    const gear=[e.suit?'fato <strong>'+esc(e.suit)+' mm</strong>':null,
+      e.tankL?'garrafa <strong>'+esc(e.tankL)+' L '+esc(e.tankMat||'')+'</strong>':null,
+      e.weights?'pesos <strong>'+esc(e.weights)+' kg</strong>':null].filter(Boolean).join(' · ');
+    let media='';
+    if(e.photoLog||e.photoStamp||e.stamp){
+      media='<div class="entry-media">'
+        +(e.stamp?makeStampSVG(e.stamp,String(e.id)):'')
+        +(e.photoStamp?'<img class="stamp-small" src="'+e.photoStamp+'" alt="Carimbo original" title="Carimbo original" onclick="openPhoto('+e.id+',\'stamp\')">':'')
+        +(e.photoLog?'<span class="chip" onclick="openPhoto('+e.id+',\'log\')">📎 página do logbook</span>':'')
+        +'</div>';
+    }
+    return '<article class="entry"><div class="entry-top"><div>'
+      +'<div class="entry-num">Dive #'+esc(e.num)+' · '+esc(e.type||'')+(e.imported?'<span class="tag-import">importado</span>':'')+'</div>'
+      +'<div class="entry-site">'+esc(e.site)+'</div>'
+      +'<div class="entry-date">'+fmtDate(e.date)+(e.vis?' · visibilidade '+esc(e.vis)+' m':'')+'</div>'
+      +'</div><div class="mini" title="'+e.rating+'/5">'+bb+'</div></div>'
+      +'<div class="readout">'
+      +(e.depth?'<div><small>Prof. máx</small><b>'+esc(e.depth)+' m</b></div>':'')
+      +(e.time?'<div><small>Tempo</small><b>'+esc(e.time)+' min</b></div>':'')
+      +(e.temp?'<div><small>Água</small><b>'+esc(e.temp)+' °C</b></div>':'')
+      +(cons!==null?'<div><small>Ar usado</small><b>'+cons+' bar</b></div>':'')
+      +'</div>'
+      +(gear?'<div class="gear">'+gear+'</div>':'')
+      +(e.notes?'<div class="notes">'+esc(e.notes)+'</div>':'')
+      +media
+      +'<div class="entry-foot"><span class="buddy">'+esc(e.buddy||'')+'</span>'
+      +'<span class="foot-actions"><button class="link-btn" onclick="editEntry('+e.id+')">editar</button>'
+      +'<button class="link-btn danger" onclick="delEntry('+e.id+')">apagar</button></span></div></article>';
+  }).join('');
+}
+
+loadEntries().then(async()=>{
+  await loadCoords();
+  await loadDeleted();
+  render();
+  initMap();
+  drawMarkers();
+  if(sb){
+    const {data}=await sb.auth.getSession();
+    user=data&&data.session?data.session.user:null;
+    updateAccountUI();
+    if(user)cloudSync(true);
+  }
+});
+</script>
+</body>
+</html>

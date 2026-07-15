@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dive Logbook · Rita</title>
+<title>Dive Logbook</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -139,7 +139,7 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
   <div class="ticks"><span>0 m</span><span>10</span><span>20</span><span>30</span></div>
   <div class="wrap">
     <h1>Dive Logbook</h1>
-    <div class="sub">Personal dive log · Rita</div>
+    <div class="sub" id="subTitle">Personal dive log</div>
     <div class="stats">
       <div class="stat"><b id="stTotal">0</b><span>dives</span></div>
       <div class="stat"><b id="stDepth">–</b><span>max depth</span></div>
@@ -313,6 +313,8 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
     </div>
     <div id="authLoggedIn" style="display:none">
       <p class="import-summary">Signed in as <b id="authUserEmail"></b>.<br>Your dives sync automatically.</p>
+      <div style="margin-bottom:12px"><label for="authName">Your name (shown in the header)</label><input type="text" id="authName" placeholder="e.g. Rita" maxlength="30"></div>
+      <div class="actions" style="margin-bottom:6px"><button class="btn btn-ghost" id="authNameBtn">Save name</button></div>
       <div class="actions">
         <button class="btn btn-ghost" id="authSignOutBtn">Sign out</button>
         <button class="btn btn-ghost" onclick="cloudSync(true);closeAuth()">Sync now</button>
@@ -411,7 +413,17 @@ async function saveDeleted(){
     else{localStorage.setItem(DEL_KEY,JSON.stringify(deletedIds))}
   }catch(e){}
 }
+function displayName(){
+  if(!user)return'';
+  const meta=user.user_metadata||{};
+  return meta.full_name||((user.email||'').split('@')[0]);
+}
+function updateHeader(){
+  const n=displayName();
+  $('subTitle').textContent='Personal dive log'+(n?' · '+n:'');
+}
 function updateAccountUI(){
+  updateHeader();
   const chip=$('accountChip');
   if(!sb){chip.style.display='none';return}
   chip.style.display='inline-flex';
@@ -427,7 +439,10 @@ function updateAccountUI(){
   }
   $('authLoggedOut').style.display=user?'none':'block';
   $('authLoggedIn').style.display=user?'block':'none';
-  if(user)$('authUserEmail').textContent=user.email||'';
+  if(user){
+    $('authUserEmail').textContent=user.email||'';
+    $('authName').value=(user.user_metadata&&user.user_metadata.full_name)||'';
+  }
 }
 function openAuth(){
   if(!sb){alert('Sync is not configured in this installation yet (see SETUP.md). Your data is stored on this device.');return}
@@ -447,6 +462,15 @@ if(sb){
     $('authMsg').textContent='Sending…';
     const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
     $('authMsg').textContent=error?'Couldn\'t send — please try again.':'✉️ Sent! Open the email on this device and tap the link.';
+  });
+  $('authNameBtn').addEventListener('click',async()=>{
+    const n=$('authName').value.trim();
+    if(!n){$('authMsg').textContent='Type a name first.';return}
+    const {data,error}=await sb.auth.updateUser({data:{full_name:n}});
+    if(error){$('authMsg').textContent='Couldn\'t save the name — try again.';return}
+    if(data&&data.user)user=data.user;
+    updateHeader();
+    $('authMsg').textContent='Name saved ✓';
   });
   $('authSignOutBtn').addEventListener('click',async()=>{
     await sb.auth.signOut();

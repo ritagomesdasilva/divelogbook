@@ -159,7 +159,7 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
         <button class="menu-item" onclick="closeMenu();openAuth()">☁️ Account & sync</button>
       </div>
     </div>
-    <input type="file" id="importFile" accept=".csv,.xml,.uddf,.txt" style="display:none">
+    <input type="file" id="importFile" accept=".csv,.xml,.uddf,.txt,.json" style="display:none">
     <button class="chip" id="accountChip" style="display:none" onclick="openAuth()">☁️ Sign in to sync</button>
     <span class="msg" id="dashMsg"></span>
   </div>
@@ -305,6 +305,14 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
       <div class="actions">
         <button class="btn" id="authSendBtn">Send magic link</button>
         <button class="btn btn-ghost" onclick="closeAuth()">Use without account</button>
+      </div>
+      <div id="authCodeRow" style="display:none;margin:12px 0 4px">
+        <label for="authCode">Enter the 6-digit code from the email</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="max-width:140px;font-family:'IBM Plex Mono',monospace;letter-spacing:3px">
+          <button class="btn" id="authVerifyBtn" style="padding:10px 16px">Verify</button>
+        </div>
+        <div class="hint" style="margin-top:6px">Best if you added this app to your Home Screen — no need to leave it.</div>
       </div>
       <div class="actions" id="authBackupRow" style="display:none;margin-top:8px">
         <button class="btn btn-ghost" id="authBackupBtn">💾 No account? Save a backup file instead</button>
@@ -461,7 +469,21 @@ if(sb){
     if(!email||!email.includes('@')){$('authMsg').textContent='Please enter a valid email.';return}
     $('authMsg').textContent='Sending…';
     const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
-    $('authMsg').textContent=error?'Couldn\'t send — please try again.':'✉️ Sent! Open the email on this device and tap the link.';
+    if(error){$('authMsg').textContent='Couldn\'t send — please try again.';return}
+    $('authMsg').textContent='✉️ Sent! Tap the link in the email — or type the 6-digit code below.';
+    $('authCodeRow').style.display='block';
+  });
+  $('authVerifyBtn').addEventListener('click',async()=>{
+    const email=$('authEmail').value.trim();
+    const code=$('authCode').value.trim();
+    if(code.length!==6){$('authMsg').textContent='The code has 6 digits.';return}
+    $('authMsg').textContent='Verifying…';
+    const {data,error}=await sb.auth.verifyOtp({email,token:code,type:'email'});
+    if(error){$('authMsg').textContent='Invalid or expired code — request a new one.';return}
+    user=data&&data.user?data.user:user;
+    $('authMsg').textContent='✓ Signed in!';
+    updateAccountUI();
+    cloudSync(true);
   });
   $('authNameBtn').addEventListener('click',async()=>{
     const n=$('authName').value.trim();
@@ -755,7 +777,12 @@ $('importFile').addEventListener('change',async e=>{
   const text=await f.text();
   let imported=[];
   try{
-    if(/\.(xml|uddf)$/i.test(f.name)||text.trim().startsWith('<')){imported=parseDiveXML(text)}
+    const t=text.trim();
+    if(/\.json$/i.test(f.name)||t.startsWith('[')||t.startsWith('{')){
+      const j=JSON.parse(t);
+      imported=(Array.isArray(j)?j:(j.entries||[])).map(d=>{const c=Object.assign({},d);delete c.id;return c});
+    }
+    else if(/\.(xml|uddf)$/i.test(f.name)||t.startsWith('<')){imported=parseDiveXML(text)}
     else{imported=parseDiveCSV(text)}
   }catch(err){flash('I couldn\'t parse this file.','dashMsg');e.target.value='';return}
   if(!imported.length){flash('No dives found in the file.','dashMsg');e.target.value='';return}

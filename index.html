@@ -303,9 +303,10 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
       <p class="import-summary" id="authIntro">👋 Welcome! With a free account, your dives are stored in the cloud and available on any device. No passwords: you get a <b>magic link</b> by email.</p>
       <div style="margin-bottom:12px"><label for="authEmail">Your email</label><input type="email" id="authEmail" placeholder="name@example.com" autocomplete="email"></div>
       <div class="actions">
-        <button class="btn" id="authSendBtn">Send magic link</button>
+        <button class="btn" id="authSendBtn">Email me a sign-in code</button>
         <button class="btn btn-ghost" onclick="closeAuth()">Use without account</button>
       </div>
+      <button class="link-btn" id="haveCodeBtn" style="margin-top:8px;padding-left:0">I already have a code</button>
       <div id="authCodeRow" style="display:none;margin:12px 0 4px">
         <label for="authCode">Enter the 6-digit code from the email</label>
         <div style="display:flex;gap:8px">
@@ -456,6 +457,8 @@ function openAuth(){
   if(!sb){alert('Sync is not configured in this installation yet (see SETUP.md). Your data is stored on this device.');return}
   $('authMsg').textContent='';
   $('authBackupRow').style.display=(!user&&entries.length)?'flex':'none';
+  $('haveCodeBtn').style.display=user?'none':'inline';
+  $('authCodeRow').style.display='none';
   $('authIntro').innerHTML=(!user&&entries.length)?
     '⚠️ You have <b>'+entries.length+' dive'+(entries.length>1?'s':'')+'</b> stored only on this device — if the browser data is cleared, they\'re gone. Sign in and they\'ll be safely backed up and available everywhere. No passwords: you get a <b>magic link</b> by email.':
     '👋 Welcome! With a free account, your dives are stored in the cloud and available on any device. No passwords: you get a <b>magic link</b> by email.';
@@ -470,12 +473,21 @@ if(sb){
     $('authMsg').textContent='Sending…';
     const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
     if(error){$('authMsg').textContent='Couldn\'t send — please try again.';return}
-    $('authMsg').textContent='✉️ Sent! Tap the link in the email — or type the 6-digit code below.';
+    $('authMsg').textContent='✉️ Sent! Type the 6-digit code from the email below. (Requesting again replaces the code.)';
     $('authCodeRow').style.display='block';
+    $('haveCodeBtn').style.display='none';
+    $('authCode').focus();
+  });
+  $('haveCodeBtn').addEventListener('click',()=>{
+    $('authCodeRow').style.display='block';
+    $('haveCodeBtn').style.display='none';
+    $('authMsg').textContent='Enter the email you used and the code you received.';
+    $('authCode').focus();
   });
   $('authVerifyBtn').addEventListener('click',async()=>{
     const email=$('authEmail').value.trim();
     const code=$('authCode').value.trim();
+    if(!email||!email.includes('@')){$('authMsg').textContent='Enter the email you used first.';return}
     if(code.length!==6){$('authMsg').textContent='The code has 6 digits.';return}
     $('authMsg').textContent='Verifying…';
     const {data,error}=await sb.auth.verifyOtp({email,token:code,type:'email'});

@@ -308,9 +308,9 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
       </div>
       <button class="link-btn" id="haveCodeBtn" style="margin-top:8px;padding-left:0">I already have a code</button>
       <div id="authCodeRow" style="display:none;margin:12px 0 4px">
-        <label for="authCode">Enter the 6-digit code from the email</label>
+        <label for="authCode">Enter the code from the email</label>
         <div style="display:flex;gap:8px">
-          <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="max-width:140px;font-family:'IBM Plex Mono',monospace;letter-spacing:3px">
+          <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" style="max-width:140px;font-family:'IBM Plex Mono',monospace;letter-spacing:3px">
           <button class="btn" id="authVerifyBtn" style="padding:10px 16px">Verify</button>
         </div>
         <div class="hint" style="margin-top:6px">Best if you added this app to your Home Screen — no need to leave it.</div>
@@ -473,7 +473,7 @@ if(sb){
     $('authMsg').textContent='Sending…';
     const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
     if(error){$('authMsg').textContent='Couldn\'t send — please try again.';return}
-    $('authMsg').textContent='✉️ Sent! Type the 6-digit code from the email below. (Requesting again replaces the code.)';
+    $('authMsg').textContent='✉️ Sent! Type the code from the email below. (Requesting again replaces the code.)';
     $('authCodeRow').style.display='block';
     $('haveCodeBtn').style.display='none';
     $('authCode').focus();
@@ -488,7 +488,7 @@ if(sb){
     const email=$('authEmail').value.trim();
     const code=$('authCode').value.trim();
     if(!email||!email.includes('@')){$('authMsg').textContent='Enter the email you used first.';return}
-    if(code.length!==6){$('authMsg').textContent='The code has 6 digits.';return}
+    if(!/^[0-9]{6,10}$/.test(code)){$('authMsg').textContent='The code is 6–10 digits (numbers only). If your email shows a long mix of letters and numbers, the email template needs {{ .Token }} instead of {{ .TokenHash }}.';return}
     $('authMsg').textContent='Verifying…';
     const {data,error}=await sb.auth.verifyOtp({email,token:code,type:'email'});
     if(error){$('authMsg').textContent='Invalid or expired code — request a new one.';return}

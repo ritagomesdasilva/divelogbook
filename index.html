@@ -112,6 +112,7 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
 .snackbar button{background:none;border:none;color:var(--aqua);font-weight:600;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
 .empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .map-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#placeTools select{max-width:60%;font-size:12px;padding:7px 8px;border:1px solid var(--line);border-radius:8px}
 .map-card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative;isolation:isolate;z-index:0}
 #map{height:280px;width:100%;background:var(--shallow)}
 .leaflet-popup-content{font-family:'IBM Plex Sans',sans-serif;font-size:13px}
@@ -168,6 +169,7 @@ input[type=file]{padding:7px;font-size:12px;background:var(--shallow)}
   <div class="map-card">
     <div id="map"></div>
     <div class="hint" id="mapHint" style="padding:8px 12px"></div>
+    <div id="placeTools" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 12px 12px"></div>
   </div>
 
   <div class="log-head"><h2>Dive log</h2></div>
@@ -579,6 +581,14 @@ function initMap(){
     attribution:'© OpenStreetMap',maxZoom:18
   }).addTo(map);
   markerLayer=L.layerGroup().addTo(map);
+  map.on('click',async ev=>{
+    if(!placingSite)return;
+    siteCoords[placingSite]={lat:ev.latlng.lat,lng:ev.latlng.lng};
+    await saveCoords();
+    const name=placingSite;placingSite=null;
+    drawMarkers();renderPlaceTools();
+    $('mapHint').textContent='📌 '+name+' placed ✓ (tap "Place on map" to adjust any site)';
+  });
 }
 function drawMarkers(){
   if(!map)return;
@@ -597,8 +607,8 @@ function drawMarkers(){
     if(!c)continue;
     pts.push([c.lat,c.lng]);
     const stars='🫧'.repeat(bySite[s].best||0);
-    L.circleMarker([c.lat,c.lng],{radius:9,color:'#0E4C5C',weight:2,fillColor:'#8FD9DB',fillOpacity:.85})
-      .bindPopup('<b>'+esc(s)+'</b><br>'+bySite[s].count+' dive(s) '+stars)
+    L.circleMarker([c.lat,c.lng],{radius:9,color:c.approx?'#B87A00':'#0E4C5C',weight:2,fillColor:c.approx?'#F2C063':'#8FD9DB',fillOpacity:.85,dashArray:c.approx?'3,3':null})
+      .bindPopup('<b>'+esc(s)+'</b><br>'+bySite[s].count+' dive(s) '+stars+(c.approx?'<br><i>approximate area — drag-place for precision</i>':''))
       .addTo(markerLayer);
   }
   if(pts.length){map.fitBounds(pts,{padding:[36,36],maxZoom:9})}
@@ -612,17 +622,31 @@ $('mapUpdateBtn').addEventListener('click',async()=>{
   const sites=[...new Set(entries.map(e=>(e.site||'').trim()).filter(s=>s&&!s.startsWith('(imported')))];
   const missing=sites.filter(s=>!siteCoords[s]);
   let found=0;
+  async function tryGeocode(q){
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q));
+    const j=await r.json();
+    return (j&&j[0])?{lat:+j[0].lat,lng:+j[0].lon}:null;
+  }
   for(const s of missing){
     try{
       $('mapHint').textContent='Locating: '+s+'…';
-      const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(s));
-      const j=await r.json();
-      if(j&&j[0]){siteCoords[s]={lat:+j[0].lat,lng:+j[0].lon};found++}
-      else{siteCoords[s]=null} // marca como tentado; evita repetir sempre
-      await new Promise(r=>setTimeout(r,1100)); // respeitar rate limit do Nominatim
+      let c=await tryGeocode(s);
+      await new Promise(r=>setTimeout(r,1100)); // rate limit Nominatim
+      if(!c&&s.includes(',')){
+        // fallback: usar a zona depois da vírgula (ex.: "Chumphon Pinnacle, Ko Tao" -> "Ko Tao")
+        const area=s.split(',').slice(1).join(',').trim();
+        if(area){
+          $('mapHint').textContent='Locating area: '+area+'…';
+          c=await tryGeocode(area);
+          if(c)c.approx=true;
+          await new Promise(r=>setTimeout(r,1100));
+        }
+      }
+      if(c){siteCoords[s]=c;found++}
+      else{siteCoords[s]=null}
     }catch(err){
       $('mapHint').textContent='Geocoding service unreachable here — try opening the app in a browser with internet.';
-      btn.disabled=false;return;
+      btn.disabled=false;renderPlaceTools();return;
     }
   }
   // limpa nulls para poderem ser tentados noutra altura se quiseres corrigir o nome
@@ -630,9 +654,28 @@ $('mapUpdateBtn').addEventListener('click',async()=>{
   await saveCoords();
   drawMarkers();
   const notFound=missing.length-found;
-  $('mapHint').textContent=(found?found+' site(s) located ✓ ':'')+(notFound?notFound+' not found — try adding the island/country to the site name.':'');
+  $('mapHint').textContent=(found?found+' site(s) located ✓ ':'')+(notFound?notFound+' not found — place them manually below.':'');
   btn.disabled=false;
+  renderPlaceTools();
 });
+
+// ---------- colocação manual de pins ----------
+let placingSite=null;
+function renderPlaceTools(){
+  const host=$('placeTools');
+  const sites=[...new Set(entries.map(e=>(e.site||'').trim()).filter(x=>x&&!x.startsWith('(imported')))];
+  const targets=sites; // permitir também re-colocar os aproximados/errados
+  if(!targets.length){host.innerHTML='';return}
+  host.innerHTML='<select id="placeSiteSel">'+targets.map(x=>'<option'+(siteCoords[x]?'':' style="font-weight:bold"')+'>'+esc(x)+(siteCoords[x]?(siteCoords[x].approx?' (approx.)':' ✓'):' (not located)')+'</option>').join('')+'</select>'
+    +'<button class="btn-mini" id="placePinBtn">📌 Place on map</button>'
+    +'<span class="msg" id="placeMsg"></span>';
+  $('placePinBtn').addEventListener('click',()=>{
+    placingSite=$('placeSiteSel').value.replace(/ \(approx\.\)$| ✓$| \(not located\)$/,'');
+    $('placeMsg').textContent='Now tap the exact spot on the map…';
+    if(map)map.scrollWheelZoom.enable();
+  });
+}
+
 
 function clearFormFields(){
   ['fSite','fDepth','fTime','fTemp','fVis','fSuit','fTankL','fWeights','fPStart','fPEnd','fNotes','fBuddy','fPhotoLog','fPhotoStamp'].forEach(id=>$(id).value='');
@@ -1032,6 +1075,7 @@ loadEntries().then(async()=>{
   render();
   initMap();
   drawMarkers();
+  renderPlaceTools();
   if(sb){
     const {data}=await sb.auth.getSession();
     user=data&&data.session?data.session.user:null;

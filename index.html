@@ -1026,12 +1026,19 @@ $('authBackupBtn').addEventListener('click',()=>{
 });
 
 // ---------- Render ----------
+function diveMinutes(v){
+  if(v===null||v===undefined||v==='')return 0;
+  const str=String(v).trim();
+  if(str.includes(':')){const p=str.split(':');return +p[0]||0} // "45:30" (min:seg de dive computer) -> 45
+  const n=parseFloat(str.replace(',','.').replace(/[^\d.]/g,''));
+  return isNaN(n)?0:n;
+}
 function render(){
   if(typeof updateAccountUI==='function'&&$('accountChip'))updateAccountUI();
   $('stTotal').textContent=entries.length;
-  const maxD=Math.max(0,...entries.map(e=>+e.depth||0));
+  const maxD=Math.max(0,...entries.map(e=>{const n=parseFloat(String(e.depth||'').replace(',','.').replace(/[^\d.]/g,''));return isNaN(n)?0:n}));
   $('stDepth').textContent=maxD?maxD.toFixed(1)+' m':'–';
-  $('stTime').textContent=entries.reduce((s,e)=>s+(+e.time||0),0);
+  $('stTime').textContent=Math.round(entries.reduce((sum,e)=>sum+diveMinutes(e.time),0));
   const log=$('log');
   if(!entries.length){log.innerHTML='<div class="empty">No dives logged yet.<br>The ocean is waiting. 🤿<div class="empty-actions"><button class="btn" onclick="openForm()">＋ Add your first dive</button><button class="btn btn-ghost" onclick="document.getElementById(\'importFile\').click()">⌵ Import from dive computer</button></div></div>';return}
   const sorted=[...entries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.id-a.id);

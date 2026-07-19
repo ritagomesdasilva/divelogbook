@@ -853,7 +853,7 @@ $('importFile').addEventListener('change',async e=>{
     else{imported=parseDiveCSV(text)}
   }catch(err){flash('I couldn\'t parse this file.','dashMsg');e.target.value='';return}
   if(!imported.length){flash('No dives found in the file.','dashMsg');e.target.value='';return}
-  const ENRICH_FIELDS=['num','date','depth','time','temp','vis'];
+  const ENRICH_FIELDS=['num','date','depth','time','temp','vis','suit','weights','pStart','pEnd','buddy','notes'];
   const fresh=[],enrich=[];let pureDupes=0;
   imported.forEach(d=>{
     const m=findMatch(d);
@@ -960,8 +960,18 @@ function parseDiveCSV(text){
   const iDate=idx(['date','data']);
   const iSite=idx(['site','location','sítio','sitio','local','place']);
   const iDepth=idx(['max depth','maxdepth','depth','prof','profundidade']);
-  const iDur=idx(['duration','duração','duracao','dive time','divetime','bottom','tempo']);
-  const iTemp=idx(['temp']);
+  const iDur=idx(['duration','duração','duracao','dive time','divetime','bottom time','tempo de fundo']);
+  // temperatura: preferir fundo/água; nunca a do ar
+  let iTemp=heads.findIndex(h=>h.includes('temp')&&/fundo|bottom|water|água|agua/.test(h));
+  if(iTemp<0)iTemp=heads.findIndex(h=>h.includes('temp')&&!/\bar\b|\bair\b/.test(h));
+  const iCenter=idx(['centro','center','centre','operator']);
+  const iWeights=idx(['peso','weight','lastro']);
+  const iSuit=idx(['fato','wetsuit','suit']);
+  const iVis=idx(['visib']);
+  const iPStart=idx(['pressão inicial','pressao inicial','start pressure','p. inicial','tank start','pressure in']);
+  const iPEnd=idx(['pressão final','pressao final','end pressure','p. final','tank end','pressure out']);
+  const iLife=idx(['vida marinha','marine life','animais','animals','wildlife']);
+  const iNotes=idx(['nota','notes','observa','comment','descri']);
   const out=[];
   for(let i=1;i<lines.length;i++){
     const c=lines[i].split(delim);
@@ -972,6 +982,15 @@ function parseDiveCSV(text){
     if(iDepth>-1)d.depth=num(c[iDepth]);
     if(iDur>-1){let t=num(c[iDur]); if(String(c[iDur]).includes(':')){const p=c[iDur].split(':');t=(+p[0])*60+(+p[1]);t=Math.round(t/60)} d.time=t}
     if(iTemp>-1)d.temp=num(c[iTemp]);
+    const cell=i2=>i2>-1?(c[i2]||'').trim().replace(/^"|"$/g,''):'';
+    if(iCenter>-1&&cell(iCenter))d.buddy=cell(iCenter);
+    if(iWeights>-1)d.weights=num(c[iWeights]);
+    if(iSuit>-1)d.suit=num(c[iSuit]);
+    if(iVis>-1)d.vis=num(c[iVis]);
+    if(iPStart>-1)d.pStart=num(c[iPStart]);
+    if(iPEnd>-1)d.pEnd=num(c[iPEnd]);
+    const life=cell(iLife),nts=cell(iNotes);
+    if(life||nts)d.notes=[life?('Marine life: '+life):null,nts].filter(Boolean).join('\n');
     if(!d.site)d.site='(imported — site to fill in)';
     if(d.date||d.depth)out.push(d);
   }

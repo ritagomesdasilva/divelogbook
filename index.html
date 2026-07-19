@@ -814,6 +814,18 @@ function makeStampSVG(s,uid){
 // ---------- Importar do computador de mergulho ----------
 let pendingImport=[],lastImportIds=[],snackTimer=null;
 
+function findMatch(d){
+  return entries.find(e=>{
+    const sameDate=d.date&&e.date&&d.date===e.date;
+    const sameNum=d.num&&e.num&&+d.num===+e.num;
+    const closeDepth=d.depth&&e.depth&&Math.abs(+d.depth-+e.depth)<=0.5;
+    const closeTime=d.time&&e.time&&Math.abs(+d.time-+e.time)<=2;
+    if(sameDate&&sameNum)return true;
+    if(sameDate&&closeDepth&&closeTime)return true;
+    if(!d.date&&sameNum)return true;
+    return false;
+  })||null;
+}
 function isDupe(d){
   return entries.some(e=>{
     const sameDate=d.date&&e.date&&d.date===e.date;
@@ -841,27 +853,55 @@ $('importFile').addEventListener('change',async e=>{
     else{imported=parseDiveCSV(text)}
   }catch(err){flash('I couldn\'t parse this file.','dashMsg');e.target.value='';return}
   if(!imported.length){flash('No dives found in the file.','dashMsg');e.target.value='';return}
-  const fresh=imported.filter(d=>!isDupe(d));
-  const dupes=imported.length-fresh.length;
-  if(!fresh.length){flash('All '+imported.length+' dives in the file already exist in your log — nothing to import.','dashMsg');e.target.value='';return}
+  const ENRICH_FIELDS=['num','date','depth','time','temp','vis'];
+  const fresh=[],enrich=[];let pureDupes=0;
+  imported.forEach(d=>{
+    const m=findMatch(d);
+    if(!m){fresh.push(d);return}
+    const patch={};
+    ENRICH_FIELDS.forEach(f=>{
+      const has=m[f]!==undefined&&m[f]!==null&&m[f]!=='';
+      const inc=d[f]!==undefined&&d[f]!==null&&d[f]!=='';
+      if(!has&&inc)patch[f]=d[f];
+    });
+    if(m.site&&m.site.startsWith('(imported')&&d.site&&!d.site.startsWith('(imported'))patch.site=d.site;
+    if(Object.keys(patch).length){enrich.push({id:m.id,patch})}
+    else{pureDupes++}
+  });
+  if(!fresh.length&&!enrich.length){flash('All '+imported.length+' dives in the file already exist with no missing data — nothing to do.','dashMsg');e.target.value='';return}
   pendingImport=fresh;
-  showImportPreview(fresh,dupes);
+  pendingEnrich=enrich;
+  showImportPreview(fresh,pureDupes,enrich);
   e.target.value='';
 });
 
-function showImportPreview(list,dupes){
+let pendingEnrich=[],lastEnrichBackup=[];
+function showImportPreview(list,dupes,enrich){
+  enrich=enrich||[];
   const dates=list.map(d=>d.date).filter(Boolean).sort();
   let range=dates.length?(fmtDate(dates[0])+(dates.length>1&&dates[0]!==dates[dates.length-1]?' – '+fmtDate(dates[dates.length-1]):'')):'';
-  $('importSummary').textContent='Found '+list.length+' new dive(s)'+(range?' between '+range:'')+(dupes?' — '+dupes+' already in your log, skipped':'')+'. Review before adding:';
+  const parts=[];
+  if(list.length)parts.push(list.length+' new dive(s)'+(range?' between '+range:''));
+  if(enrich.length)parts.push(enrich.length+' existing dive(s) will get their missing fields filled in');
+  if(dupes)parts.push(dupes+' already complete, skipped');
+  $('importSummary').textContent='Found: '+parts.join(' · ')+'. Review before applying:';
   const rows=list.slice(0,5).map(d=>'<div><span>'+(d.date?fmtDate(d.date):'—')+'</span><span>'+(d.depth?d.depth+' m':'—')+'</span><span>'+(d.time?d.time+' min':'—')+'</span></div>').join('');
   $('importPreview').innerHTML='<div class="import-list">'+rows+'</div>'+(list.length>5?'<div class="import-more">… and '+(list.length-5)+' more</div>':'');
-  $('confirmImportBtn').textContent='Import '+list.length;
+  $('confirmImportBtn').textContent=list.length&&enrich.length?'Import '+list.length+' & complete '+enrich.length:(list.length?'Import '+list.length:'Complete '+enrich.length);
   $('importModal').style.display='flex';
 }
-function cancelImport(){pendingImport=[];$('importModal').style.display='none'}
+function cancelImport(){pendingImport=[];pendingEnrich=[];$('importModal').style.display='none'}
 
 $('confirmImportBtn').addEventListener('click',async()=>{
-  lastImportIds=[];
+  lastImportIds=[];lastEnrichBackup=[];
+  pendingEnrich.forEach(en=>{
+    const t=entries.find(x=>x.id===en.id); if(!t)return;
+    const prev={};
+    for(const f in en.patch){prev[f]=t[f];t[f]=en.patch[f]}
+    t.updatedAt=new Date().toISOString();
+    lastEnrichBackup.push({id:en.id,prev});
+    pushOne(t);
+  });
   pendingImport.forEach((d,i)=>{
     const id=Date.now()+i;
     lastImportIds.push(id);
@@ -886,10 +926,16 @@ function showSnackbar(text){
   snackTimer=setTimeout(()=>{$('snackbar').style.display='none';lastImportIds=[]},7000);
 }
 $('snackUndo').addEventListener('click',async()=>{
-  if(lastImportIds.length){
+  if(lastImportIds.length||lastEnrichBackup.length){
     entries=entries.filter(e=>!lastImportIds.includes(e.id));
-    lastImportIds=[];
-    await persist();render();
+    lastEnrichBackup.forEach(b=>{
+      const t=entries.find(x=>x.id===b.id); if(!t)return;
+      for(const f in b.prev){t[f]=b.prev[f]}
+      t.updatedAt=new Date().toISOString();
+      pushOne(t);
+    });
+    lastImportIds=[];lastEnrichBackup=[];
+    await persist();render();drawMarkers();
   }
   $('snackbar').style.display='none';
   clearTimeout(snackTimer);
@@ -913,8 +959,8 @@ function parseDiveCSV(text){
   const iNum=idx(['dive no','number','nº','numero','dive #','#']);
   const iDate=idx(['date','data']);
   const iSite=idx(['site','location','sítio','sitio','local','place']);
-  const iDepth=idx(['max depth','maxdepth','depth','prof']);
-  const iDur=idx(['duration','dive time','divetime','bottom','tempo']);
+  const iDepth=idx(['max depth','maxdepth','depth','prof','profundidade']);
+  const iDur=idx(['duration','duração','duracao','dive time','divetime','bottom','tempo']);
   const iTemp=idx(['temp']);
   const out=[];
   for(let i=1;i<lines.length;i++){
